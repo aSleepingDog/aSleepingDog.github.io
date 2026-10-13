@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-en">
+<head>
+    <meta charset="UTF-8">
+    <title>主页</title>
+    <link href="css/home_dark.css" rel="stylesheet">
+</head>
+<body>
+    <div id="head_menu">
+        <div class="head_opinion" onclick="window.location.href='home.html';">
+            <img src="assets/icon.png" id="head_icon_img">
+        </div>
+        <div class="head_opinion" style="margin-right: auto;border-right: #4b4e53 1px solid;" onclick="window.location.href='list.html';">
+            <img src="assets/list_dark.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/sun.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/translate_dark.svg">
+        </div>
+        <div class="head_opinion" id="github_opinion" onclick="window.location.href='https://github.com/aSleepingDog'">
+            <img src="assets/github.svg">
+        </div>
+    </div>
+    <div id="icon_area">
+        <img id="icon_img" src="assets/icon.png">
+        <div id="icon_name">一只睡觉的狗</div>
+    </div>
+    <div id="introduction">
+        <div id="technology_stack">
+            <div class="technology_stack_item" data-technology="C/C++">
+                <img class="technology_stack_item_img" src="assets/cplusplus.svg" alt="C/C++">
+                <div class="technology_stack_item_title">C/C++</div>
+            </div>
+            <div class="technology_stack_item" data-technology="Java">
+                <img class="technology_stack_item_img" src="assets/java.svg" alt="Java">
+                <div class="technology_stack_item_title">Java</div>
+            </div>
+            <div class="technology_stack_item" data-technology="Python">
+                <img class="technology_stack_item_img" src="assets/python.svg" alt="Python">
+                <div class="technology_stack_item_title">Python</div>
+            </div>
+            <div class="technology_stack_item" data-technology="FrontEnd">
+                <img class="technology_stack_item_img" src="assets/htmx.svg" alt="FrontEnd">
+                <div class="technology_stack_item_title">FrontEnd</div>
+            </div>
+        </div>
+        <div id="technology_context">
+            <div class="technology_paragraph">
+                目前写的比较多的编程语言，感觉能学的东西比较多，而且能实现很多东西。一开始在学校里学的C，然后根据自己的兴趣学习了C++。选择了密码学的部分算法和整体组织来学习C++的特性。目前写过简单的高精度库，密码学库，Json解析器和TCP/HTTP服务器。
+            </div>
+            <div class="technology_paragraph">
+                而且写C++有种真正感觉在控制内存和硬件的感觉，写出来的话很有成就感（当然用的时候也有一点警惕感，怕玩崩溃了）
+            </div>
+        </div>
+    </div>
+
+    <script src="js/home.js"></script>
+</body>
+</html>

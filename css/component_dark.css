@@ -1,0 +1,265 @@
+@font-face {
+    font-family: EnCodeFont;
+    src: url("consola.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+    unicode-range: U+0000-007F;
+}
+@font-face {
+    font-family: EnTextFont;
+    src: url("NotoSansSC-VF.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+    unicode-range: U+0000-007F;
+}
+@font-face {
+    font-family: CnFont;
+    src: url("联想小新黑体_常规.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+    unicode-range: U+4E00-9FFF;
+}
+
+.meta{
+    padding-left: 7px;
+    font-size: 12px;
+    color: #919191;
+}
+
+input{
+    background-color: #3c3d42;
+    color: white;
+}
+
+a{
+    color: #83aad6;
+}
+
+/*table*/
+div.table_area{
+    overflow: auto;
+    margin: 0 auto;
+}
+div.table_area table{
+    /*border-top: 1px solid #884481;*/
+    border-top: 1px solid #63255d;
+    border-left: 1px solid #63255d;
+}
+div.table_area thead tr{
+    background-color: #262626;
+    border-bottom: 1px solid #63255d;
+    border-right: 1px solid #63255d;
+}
+div.table_area thead th{
+    border-bottom: 1px solid #63255d;
+    border-right: 1px solid #63255d;
+}
+div.table_area tbody tr{
+    background-color: #432940;
+}
+div.table_area tbody td{
+    border-bottom: 1px solid #63255d;
+    border-right: 1px solid #63255d;
+}
+
+/*head label*/
+/*title_level0*/
+h1{
+    color: #00dfff;
+    font-size: 2em;
+    font-weight: bold;
+    padding: 0 0 0 1px;
+    border-bottom: #636568 1px solid;
+    margin: 5px;
+}
+/*title_level1*/
+h2{
+    color: #00dfff;
+    font-size: 1.67em;
+    font-weight: bold;
+    padding: 0 0 0 1px;
+    border-bottom: #636568 1px solid;
+    margin: 5px;
+}
+/*title_level2*/
+h3{
+    color: #00dfff;
+    font-size: 1.33em;
+    font-weight: bold;
+    padding: 0 0 0 1px;
+    margin: 5px;
+}
+/*index-area*/
+index-area .index_head{
+    font-weight: bold;
+    color: #00dfff;
+}
+index-area .index_block{
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+}
+index-area .index_title{
+    box-sizing: border-box;
+    min-width: 100%;
+    /*width: max-content;*/
+    flex-shrink: 0;
+    color: #66CCFF;
+    transition: background-color 0.3s ease;
+    padding-left: 10px;
+    /*white-space: nowrap;*/
+}
+index-area .index_title:hover{
+    background-color: #3c3d42;
+}
+index-area .index_title.active {
+    border-left: 3px solid #007bff; /* 你可以根据需要修改颜色和宽度 */
+    padding-left: calc(10px + 3px); /* 调整padding以补偿边框宽度，保持文字位置不变 */
+}
+
+/*code-area*/
+code-area select{
+    background: #2B2B2B;
+    color: white;
+}
+code-area .coding_area{
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    padding: 5px;
+    background-color: #2B2B2B;
+    color: #FFFFFF;
+    border-radius: 10px;
+}
+code-area .coding_config{
+    display: flex;
+}
+code-area .coding_button{
+    box-sizing: border-box;
+    border: #66CCFF 2px solid;
+    border-radius: 5px;
+    font-size: 13px;
+    margin: 0 2px 0 2px;
+}
+code-area .coding_button:hover{
+    background-color: #004688;
+}
+code-area .coding_line{
+    padding: 7px 0 7px 7px;
+}
+code-area .coding_text_area{
+    display: flex;
+}
+code-area .coding_text_hidden{
+    display: none;
+}
+code-area .coding_text{
+    font-family: EnCodeFont, sans-serif;
+    box-sizing: border-box;
+    width: 100%;
+    height: 80%;
+    border: 7px solid #2B2B2B;
+    border-left: none;
+    background-color: #1F1F1F;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    overflow: auto;
+}
+code-area .coding_text pre{
+    font-family: EnCodeFont, sans-serif;
+    margin: 0;
+    max-height: 40vh;
+    overflow: auto;
+}
+code-area .coding_text code{
+    font-family: EnCodeFont, sans-serif;
+    font-size: 14px;
+    counter-reset: line;
+    line-height: 1.5;
+}
+code-area .coding_text code > span::before{
+    counter-increment: line;
+    content: counter(line);
+    display: inline-block;
+    width: 4ch;
+    margin-right: 1em;
+    padding-right: 0.5em;
+    text-align: right;
+    color: #999999;
+    background-color: #2B2B2B;
+}
+
+/*animation-area*/
+animation-area .operator{
+    font-family: CnCodeFont,sans-serif;
+    display: flex;
+}
+animation-area .operator_opinion{
+    margin-right: 2px;
+}
+animation-area .animation_area{
+    background-color: #2B2B2B;
+    border-radius: 10px;
+    padding: 7px;
+    display: flex;
+    flex-direction: column;
+}
+animation-area .animation_field{
+    background-color: #1F1F1F;
+    border-radius: 10px;
+    height: 90%;
+    overflow: auto;
+}
+
+/*binary_input*/
+binary-input select{
+    font-family: CodeFont, sans-serif;
+    background: #2B2B2B;
+    color: white;
+}
+binary-input .binary_input{
+    padding: 5px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+binary-input .type_choice_field{
+    width: 100%;
+    height: 30%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+}
+binary-input .type_choice_label{
+    margin-right: 5px;
+}
+binary-input .type_param_field{
+    height: 30%;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+    align-content: flex-start;
+}
+binary-input .base64_replace_field{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+}
+binary-input .base64_replace_field_hidden{
+    display: none;
+}
+binary-input .input_field{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+binary-input .input_text{
+    width: 95%;
+}

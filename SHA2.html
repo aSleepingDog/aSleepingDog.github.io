@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <title>SHA2原理</title>
+    <link href="css/component_dark.css" rel="stylesheet">
+    <link href="css/sha2_dark.css" rel="stylesheet">
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']]
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <div id="head_menu">
+        <div class="head_opinion" onclick="window.location.href='home.html';">
+            <img src="assets/icon.png" id="head_icon_img">
+        </div>
+        <div class="head_opinion" style="margin-right: auto;border-right: #4b4e53 1px solid;" onclick="window.location.href='list.html';">
+            <img src="assets/list_dark.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/sun.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/translate_dark.svg">
+        </div>
+        <div class="head_opinion" id="github_opinion" onclick="window.location.href='https://github.com/aSleepingDog';">
+            <img src="assets/github.svg">
+        </div>
+    </div>
+    <index-area id="index" for="main_context"></index-area>
+    <div id="main_context">
+        <h1>SHA2算法</h1>
+        <div class="meta">
+            上次更新:2026-10-13
+        </div>
+        <h2>概述</h2>
+        <div class="paragraph">
+            SHA2是美国NIST推出的第二代密码学散列函数，用于替代不安全的MD5和SHA1，目前被广泛用于需要消息校验和数字签名，几年前爆火虚拟货币——比特币，就是用的此算法（准确来说是SHA2-256版本）
+        </div>
+        <div class="paragraph">
+            作为分组散列函数，其将信息填充自固定的分组，然后设置一个初值和每个分块进行操作得到新的值，然后和后续的分块操作。
+        </div>
+        <h2>配置</h2>
+        <div class="paragraph">
+            SHA2的经典配置为256，224，384，512。他们的相关配置如下
+        </div>
+        <div class="table_area">
+            <table>
+                <thead>
+                <tr>
+                    <th>配置</th>
+                    <th>块大小（字节/比特）</th>
+                    <th>输入限制（比特）</th>
+                    <th>长度占位（字节/比特）</th>
+                    <th>输出（字节/比特）</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>256</td>
+                    <td>64/512</td>
+                    <td>2^64-1</td>
+                    <td>8/64</td>
+                    <td>32/256</td>
+                </tr>
+                <tr>
+                    <td>224</td>
+                    <td>64/512</td>
+                    <td>2^64-1</td>
+                    <td>8/64</td>
+                    <td>28/224</td>
+                </tr>
+                <tr>
+                    <td>512</td>
+                    <td>128/1024</td>
+                    <td>2^128-1</td>
+                    <td>16/128</td>
+                    <td>64/512</td>
+                </tr>
+                <tr>
+                    <td>384</td>
+                    <td>128/1024</td>
+                    <td>2^128-1</td>
+                    <td>16/128</td>
+                    <td>48/384</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <h2>过程</h2>
+        <div class="paragraph">
+            接下来出现的数据长度单位均为比特
+        </div>
+        <h3>分组</h3>
+        <div class="paragraph">
+            消息M，其长度为size，分组长度为block_size，长度占位length_size，将M按照block_size一块块分组
+        </div>
+        <h3>规范化</h3>
+        <div class="paragraph">
+            对于最后一个分组（长度last_size），在这个分组后加上一个比特1（此时长度last_size+1）。
+        </div>
+        <div class="paragraph">
+            判断block_size-(last_size+1)和length_size的大小
+        </div>
+        <div class="paragraph">
+            如果相等，则直接按大端方式把size写到此分组末尾。
+        </div>
+        <div class="paragraph">
+            如果小于，则不断填充比特0，直到相等，然后按照相等方式填充。
+        </div>
+        <div class="paragraph">
+            如果大于，则此分组剩下的位全部填充比特0。然后新开一个分组（长度remain_size），继续填充比特0，
+            直到block_size-remain_size等于length_size然后按照相等方式填充。
+        </div>
+        <div class="paragraph">
+            下面的动画演示了SHA2-256的数据分组和规范化（其他情况类似）（请在一次步骤结束后再点击下一步）
+        </div>
+        <animation-area id="sha2_fill" speed="50">
+            <div>二进制数据</div>
+            <binary-input id="sha2_fill_input"></binary-input>
+        </animation-area>
+        <h3>初始值</h3>
+        <div class="paragraph">
+            对于不同的配置，其初值字节串（以大写Hex呈现）如下
+        </div>
+        <div class="table_area">
+            <table>
+                <thead>
+                <tr>
+                    <th>配置</th>
+                    <th>初值字节（以大写Hex呈现）</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>256</td>
+                    <td><span class="inline_code">6A09E667BB67AE853C6EF372A54FF53A510E527F9B05688C1F83D9AB5BE0CD19</span></td>
+                </tr>
+                <tr>
+                    <td>224</td>
+                    <td><span class="inline_code">C1059ED8367CD5073070DD17F70E5939FFC00B316858151164F98FA7BEFA4FA4</span></td>
+                </tr>
+                <tr>
+                    <td>512</td>
+                    <td><span class="inline_code">6A09E667F3BCC908BB67AE8584CAA73B3C6EF372FE94F82BA54FF53A5F1D36F1510E527FADE682D19B05688C2B3E6C1F1F83D9ABFB41BD6B5BE0CD19137E2179</span></td>
+                </tr>
+                <tr>
+                    <td>384</td>
+                    <td><span class="inline_code">CBBB9D5DC1059ED8629A292A367CD5079159015A3070DD17152FECD8F70E593967332667FFC00B318EB44A8768581511DB0C2E0D64F98FA747B5481DBEFA4FA4</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="paragraph">
+            其中，256和512的初值为前八个素数（2, 3, 5, 7, 11, 13, 17, 19）平方根的高32位或64位二进制小数
+        </div>
+        <div class="paragraph">
+            其中，224和384的初值为第九个到第十六个素数（23, 29, 31, 37, 41, 43, 47, 53）平方根的低32位或64位二进制小数
+        </div>
+        <div class="paragraph">
+            可以通过如下的代码生成
+        </div>
+        <code-area>
+            <code-opinion language="C/C++">
+<pre style="white-space:pre-wrap;word-wrap:break-word;background-color:#1F1F1F;color:#CCCCCC">
+<code><span><span style="color:#C586C0">#include</span><span style="color:#CE9178"> &lt;vector&gt;</span></span>
+<span><span style="color:#C586C0">#include</span><span style="color:#CE9178"> &lt;cstdint&gt;</span></span>
+<span><span style="color:#C586C0">#include</span><span style="color:#CE9178"> &lt;iostream&gt;</span></span>
+<span><span style="color:#C586C0">using</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#D4D4D4"> =</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::</span><span style="color:#4EC9B0">array</span><span style="color:#CCCCCC">&lt;</span><span style="color:#569CD6">uint64_t</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">&gt;;</span></span>
+<span><span style="color:#4EC9B0">std</span><span style="color:#CCCCCC">::</span><span style="color:#4EC9B0">strong_ordering</span><span style="color:#C586C0"> operator&lt;=&gt;</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&amp;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&amp;</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#C586C0">    if</span><span style="color:#CCCCCC">(</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">!=</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">])</span></span>
+<span><span style="color:#C586C0">        return</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&lt;=&gt;</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&lt;=&gt;</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#4EC9B0">uint128_t</span><span style="color:#C586C0"> operator&lt;&lt;</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&amp;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> shift</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#CCCCCC">    shift </span><span style="color:#D4D4D4">%=</span><span style="color:#B5CEA8"> 128</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#C586C0">    if</span><span style="color:#CCCCCC">(shift </span><span style="color:#D4D4D4">&gt;=</span><span style="color:#B5CEA8"> 64</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#C586C0">        return</span><span style="color:#CCCCCC"> {</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&lt;&lt;</span><span style="color:#CCCCCC"> (shift </span><span style="color:#D4D4D4">-</span><span style="color:#B5CEA8"> 64</span><span style="color:#CCCCCC">)};</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> {</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]</span><span style="color:#D4D4D4">&lt;&lt;</span><span style="color:#CCCCCC">shift, (</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">]</span><span style="color:#D4D4D4">&lt;&lt;</span><span style="color:#CCCCCC">shift) </span><span style="color:#D4D4D4">|</span><span style="color:#CCCCCC"> (</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]</span><span style="color:#D4D4D4">&gt;&gt;</span><span style="color:#CCCCCC">(</span><span style="color:#B5CEA8">64</span><span style="color:#D4D4D4">-</span><span style="color:#CCCCCC">shift))};</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#569CD6">void</span><span style="color:#DCDCAA"> u64add</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> carry_in</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t*</span><span style="color:#9CDCFE"> carry</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t*</span><span style="color:#9CDCFE"> result</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> low </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> (a </span><span style="color:#D4D4D4">&amp;</span><span style="color:#B5CEA8"> 0xFFFFFFFF</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> (b </span><span style="color:#D4D4D4">&amp;</span><span style="color:#B5CEA8"> 0xFFFFFFFF</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> carry_in;</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> high </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> (a </span><span style="color:#D4D4D4">&gt;&gt;</span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> (b </span><span style="color:#D4D4D4">&gt;&gt;</span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> (low </span><span style="color:#D4D4D4">&gt;&gt;</span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#D4D4D4">    *</span><span style="color:#CCCCCC">carry </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> high </span><span style="color:#D4D4D4">&gt;&gt;</span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#D4D4D4">    *</span><span style="color:#CCCCCC">result </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> high </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#B5CEA8"> 32</span><span style="color:#D4D4D4"> |</span><span style="color:#CCCCCC"> (low </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#B5CEA8"> 0xFFFFFFFF</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#4EC9B0">uint128_t</span><span style="color:#C586C0"> operator+</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&amp;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&amp;</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#4EC9B0">    uint128_t</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> carry </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#DCDCAA">    u64add</span><span style="color:#CCCCCC">(carry, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&amp;</span><span style="color:#CCCCCC">carry, </span><span style="color:#D4D4D4">&amp;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#DCDCAA">    u64add</span><span style="color:#CCCCCC">(carry, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&amp;</span><span style="color:#CCCCCC">carry, </span><span style="color:#D4D4D4">&amp;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#569CD6">void</span><span style="color:#DCDCAA"> u64sub</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> borrow_in</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t*</span><span style="color:#9CDCFE"> borrow</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t*</span><span style="color:#9CDCFE"> result</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> carry </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> b </span><span style="color:#D4D4D4">==</span><span style="color:#B5CEA8"> 0xFFFFFFFFFFFFFFFF</span><span style="color:#D4D4D4"> &amp;&amp;</span><span style="color:#CCCCCC"> borrow_in </span><span style="color:#D4D4D4">==</span><span style="color:#B5CEA8"> 1</span><span style="color:#D4D4D4"> ?</span><span style="color:#B5CEA8"> 1</span><span style="color:#D4D4D4"> :</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#CCCCCC">    b </span><span style="color:#D4D4D4">+=</span><span style="color:#CCCCCC"> borrow_in;</span></span>
+<span><span style="color:#569CD6">    bool</span><span style="color:#CCCCCC"> com </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">&gt;=</span><span style="color:#CCCCCC"> b;</span></span>
+<span><span style="color:#D4D4D4">    *</span><span style="color:#CCCCCC">borrow </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> carry </span><span style="color:#D4D4D4">|</span><span style="color:#D4D4D4"> !</span><span style="color:#CCCCCC">com;</span></span>
+<span><span style="color:#D4D4D4">    *</span><span style="color:#CCCCCC">result </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> com </span><span style="color:#D4D4D4">?</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">-</span><span style="color:#CCCCCC"> b </span><span style="color:#D4D4D4">:</span><span style="color:#CCCCCC"> (</span><span style="color:#D4D4D4">~</span><span style="color:#CCCCCC">(b </span><span style="color:#D4D4D4">-</span><span style="color:#CCCCCC"> a) </span><span style="color:#D4D4D4">+</span><span style="color:#B5CEA8"> 1</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#4EC9B0">uint128_t</span><span style="color:#C586C0"> operator-</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&amp;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&amp;</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#4EC9B0">    uint128_t</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> borrow </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#DCDCAA">    u64sub</span><span style="color:#CCCCCC">(</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&amp;</span><span style="color:#CCCCCC">borrow, </span><span style="color:#D4D4D4">&amp;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#DCDCAA">    u64sub</span><span style="color:#CCCCCC">(borrow, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&amp;</span><span style="color:#CCCCCC">borrow, </span><span style="color:#D4D4D4">&amp;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#569CD6">uint64_t</span><span style="color:#DCDCAA"> square_root</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> p_</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#4EC9B0">    uint128_t</span><span style="color:#CCCCCC"> p </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> {p_,</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">};</span></span>
+<span><span style="color:#4EC9B0">    uint128_t</span><span style="color:#CCCCCC"> r </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> {p_</span><span style="color:#D4D4D4">/</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">};</span></span>
+<span><span style="color:#C586C0">    while</span><span style="color:#CCCCCC">(</span><span style="color:#9CDCFE">r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]</span><span style="color:#D4D4D4">*</span><span style="color:#9CDCFE">r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&gt;</span><span style="color:#9CDCFE"> p</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">])</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#9CDCFE">        r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]</span><span style="color:#D4D4D4">--</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#9CDCFE">    p</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">-=</span><span style="color:#9CDCFE"> r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]</span><span style="color:#D4D4D4">*</span><span style="color:#9CDCFE">r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#C586C0">    for</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">uint64_t</span><span style="color:#CCCCCC"> i </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">; i </span><span style="color:#D4D4D4">&lt;</span><span style="color:#B5CEA8"> 64</span><span style="color:#CCCCCC">; i</span><span style="color:#D4D4D4">++</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#CCCCCC">        p </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> p </span><span style="color:#D4D4D4">&lt;&lt;</span><span style="color:#B5CEA8"> 2</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#4EC9B0">        uint128_t</span><span style="color:#CCCCCC"> t </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> (r</span><span style="color:#D4D4D4">&lt;&lt;</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#9CDCFE">        t</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]</span><span style="color:#D4D4D4">|=</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#CCCCCC">        r </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> r </span><span style="color:#D4D4D4">&lt;&lt;</span><span style="color:#B5CEA8"> 1</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#C586C0">        if</span><span style="color:#CCCCCC">(p </span><span style="color:#D4D4D4">&gt;=</span><span style="color:#CCCCCC"> t)</span></span>
+<span><span style="color:#CCCCCC">        {</span></span>
+<span><span style="color:#CCCCCC">            p </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> p </span><span style="color:#D4D4D4">-</span><span style="color:#CCCCCC"> t;</span></span>
+<span><span style="color:#9CDCFE">            r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]</span><span style="color:#D4D4D4">|=</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#CCCCCC">        }</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#9CDCFE"> r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#569CD6">int</span><span style="color:#DCDCAA"> main</span><span style="color:#CCCCCC">()</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#569CD6">    const</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::vector</span><span style="color:#D4D4D4">&lt;</span><span style="color:#569CD6">uint64_t</span><span style="color:#D4D4D4">&gt;</span><span style="color:#CCCCCC"> primes </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> {</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">3</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">5</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">7</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">11</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">13</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">17</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">19</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">23</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">29</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">31</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">37</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">41</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">43</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">47</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">53</span><span style="color:#CCCCCC">};</span></span>
+<span><span style="color:#C586C0">    for</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">auto</span><span style="color:#CCCCCC"> prime : primes)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#4EC9B0">        std</span><span style="color:#CCCCCC">::cout </span><span style="color:#D4D4D4">&lt;&lt;</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::</span><span style="color:#DCDCAA">format</span><span style="color:#CCCCCC">(</span><span style="color:#CE9178">"{}: {:X}"</span><span style="color:#CCCCCC">, prime, </span><span style="color:#DCDCAA">square_root</span><span style="color:#CCCCCC">(prime)) </span><span style="color:#D4D4D4">&lt;&lt;</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::endl;</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+</code></pre>
+            </code-opinion>
+            <code-opinion language="Python">
+<pre style="white-space:pre-wrap;word-wrap:break-word;background-color:#1F1F1F;color:#CCCCCC"><code><span><span style="color:#569CD6">def</span><span style="color:#DCDCAA"> sqrt</span><span style="color:#CCCCCC">(</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">: </span><span style="color:#4EC9B0">int</span><span style="color:#CCCCCC">):</span></span>
+<span><span style="color:#CCCCCC">    r0 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a</span><span style="color:#D4D4D4">//</span><span style="color:#B5CEA8">2</span></span>
+<span><span style="color:#CCCCCC">    r1 </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#F44747">;</span></span>
+<span><span style="color:#C586C0">    while</span><span style="color:#CCCCCC"> r0</span><span style="color:#D4D4D4">!=</span><span style="color:#CCCCCC">r1:</span></span>
+<span><span style="color:#CCCCCC">        r1 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> r0</span></span>
+<span><span style="color:#CCCCCC">        r0 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> (r0 </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> a</span><span style="color:#D4D4D4">//</span><span style="color:#CCCCCC">r0)</span><span style="color:#D4D4D4">//</span><span style="color:#B5CEA8">2</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> r0</span></span>
+<span></span>
+<span><span style="color:#CCCCCC">primes </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> [</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">3</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">5</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">7</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">11</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">13</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">17</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">19</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">23</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">29</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">31</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">37</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">41</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">43</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">47</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">53</span><span style="color:#CCCCCC">]</span></span>
+<span><span style="color:#C586C0">for</span><span style="color:#CCCCCC"> a </span><span style="color:#C586C0">in</span><span style="color:#CCCCCC"> primes:</span></span>
+<span><span style="color:#CCCCCC">    r </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> sqrt(a</span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#B5CEA8">128</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#DCDCAA">    print</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">f</span><span style="color:#CE9178">"</span><span style="color:#569CD6">{</span><span style="color:#CCCCCC">a</span><span style="color:#569CD6">:02d}</span><span style="color:#CE9178"> : </span><span style="color:#569CD6">{</span><span style="color:#CCCCCC">r</span><span style="color:#D4D4D4">&#x26;</span><span style="color:#569CD6">0x</span><span style="color:#B5CEA8">FFFFFFFFFFFFFFFF</span><span style="color:#569CD6">:016X}</span><span style="color:#CE9178">"</span><span style="color:#CCCCCC">)</span></span></code></pre>
+            </code-opinion>
+        </code-area>
+        <div class="paragraph">
+            由于需要计算的精度在C++中难以表示，所以实现了部分函数用于128位整数的计算（gcc/llvm可以用__uint128_t简化）。相比而言Python的实现就比较简洁
+        </div>
+        <div class="paragraph">
+            实际使用时，直接将字节串硬编码作为初始值（或者使用C++的编译期计算），以提高效率。
+        </div>
+        <h3>分组扩展</h3>
+        <div class="paragraph">
+            接下来以&gt&gt和&lt&lt表示逻辑移位（超出部分丢弃，不足部分补0），以&gt&gt&gt和&lt&lt&lt表示循环移位（超出补分补到另一边）
+        </div>
+        <div class="paragraph">
+            字和字的加法如果有进位溢出则直接切断丢弃，用|表示大端拼接（比如FE = F | E）
+        </div>
+        <div class="paragraph">
+            将单个分组重新解释为若干个32位字（224和256）或64位字（384和512），以当前分组末尾位置（即偏移量16的字），以大端方式取出偏移量为1，14，0，9的字
+        </div>
+        <div class="paragraph">
+            命名为$s_0$,$s_1$,$s_2$,$s_3$,然后做以下操作
+        </div>
+        <div class="paragraph">
+            $$s_0 = s_0 \ggg 7 \oplus s_0 \ggg 18 \oplus s_0 \gg 3$$
+        </div>
+        <div class="paragraph">
+            $$s_1 = s_1 \ggg 17 \oplus s_1 \ggg 19 \oplus s_1 \gg 10$$
+        </div>
+        <div class="paragraph">
+            $$a = s_0 + s_1 + s_2 + s_3$$
+        </div>
+        <div class="paragraph">
+            然后按照大端方式将新的字a，填充到分组末尾
+        </div>
+        <div class="paragraph">
+            之后依照上述方式补充分组至64个字（224和256）和80个字（384和512）
+        </div>
+        <div class="paragraph">
+            下面以单步调试的动画演示了SHA2-256的单块分组扩展
+        </div>
+        <animation-area id="sha2_block_extend" speed="50">
+            <div>二进制数据</div>
+            <binary-input id="sha2_block_extend_input"></binary-input>
+        </animation-area>
+        <div class="paragraph">
+            还有扩展全自动全享版（何尝不是一种享受）
+        </div>
+        <animation-area id="sha2_block_extend_fast" speed="50">
+            <div>二进制数据</div>
+            <binary-input id="sha2_block_extend_fast_input"></binary-input>
+        </animation-area>
+        <h3>过程常量</h3>
+        <div class="paragraph">
+            SHA2整体使用前64（224/256）或80（384/512）素数立方根的高32（224/256）或64（384/512）二进制小数位，具体数值如下（以大写Hex呈现）
+        </div>
+        <div class="paragraph">
+            SHA2-256/224常数$K$表
+        </div>
+        <div class="table_area">
+            <table>
+                <tbody>
+                    <tr>
+                        <td><span class="inline_code">428A2F98</span></td>
+                        <td><span class="inline_code">71374491</span></td>
+                        <td><span class="inline_code">B5C0FBCF</span></td>
+                        <td><span class="inline_code">E9B5DBA5</span></td>
+                        <td><span class="inline_code">3956C25B</span></td>
+                        <td><span class="inline_code">59F111F1</span></td>
+                        <td><span class="inline_code">923F82A4</span></td>
+                        <td><span class="inline_code">AB1C5ED5</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="inline_code">D807AA98</span></td>
+                        <td><span class="inline_code">12835B01</span></td>
+                        <td><span class="inline_code">243185BE</span></td>
+                        <td><span class="inline_code">550C7DC3</span></td>
+                        <td><span class="inline_code">72BE5D74</span></td>
+                        <td><span class="inline_code">80DEB1FE</span></td>
+                        <td><span class="inline_code">9BDC06A7</span></td>
+                        <td><span class="inline_code">C19BF174</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="inline_code">E49B69C1</span></td>
+                        <td><span class="inline_code">EFBE4786</span></td>
+                        <td><span class="inline_code">0FC19DC6</span></td>
+                        <td><span class="inline_code">240CA1CC</span></td>
+                        <td><span class="inline_code">2DE92C6F</span></td>
+                        <td><span class="inline_code">4A7484AA</span></td>
+                        <td><span class="inline_code">5CB0A9DC</span></td>
+                        <td><span class="inline_code">76F988DA</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="inline_code">983E5152</span></td>
+                        <td><span class="inline_code">A831C66D</span></td>
+                        <td><span class="inline_code">B00327C8</span></td>
+                        <td><span class="inline_code">BF597FC7</span></td>
+                        <td><span class="inline_code">C6E00BF3</span></td>
+                        <td><span class="inline_code">D5A79147</span></td>
+                        <td><span class="inline_code">06CA6351</span></td>
+                        <td><span class="inline_code">14292967</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="inline_code">27B70A85</span></td>
+                        <td><span class="inline_code">2E1B2138</span></td>
+                        <td><span class="inline_code">4D2C6DFC</span></td>
+                        <td><span class="inline_code">53380D13</span></td>
+                        <td><span class="inline_code">650A7354</span></td>
+                        <td><span class="inline_code">766A0ABB</span></td>
+                        <td><span class="inline_code">81C2C92E</span></td>
+                        <td><span class="inline_code">92722C85</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="inline_code">A2BFE8A1</span></td>
+                        <td><span class="inline_code">A81A664B</span></td>
+                        <td><span class="inline_code">C24B8B70</span></td>
+                        <td><span class="inline_code">C76C51A3</span></td>
+                        <td><span class="inline_code">D192E819</span></td>
+                        <td><span class="inline_code">D6990624</span></td>
+                        <td><span class="inline_code">F40E3585</span></td>
+                        <td><span class="inline_code">106AA070</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="inline_code">19A4C116</span></td>
+                        <td><span class="inline_code">1E376C08</span></td>
+                        <td><span class="inline_code">2748774C</span></td>
+                        <td><span class="inline_code">34B0BCB5</span></td>
+                        <td><span class="inline_code">391C0CB3</span></td>
+                        <td><span class="inline_code">4ED8AA4A</span></td>
+                        <td><span class="inline_code">5B9CCA4F</span></td>
+                        <td><span class="inline_code">682E6FF3</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="inline_code">748F82EE</span></td>
+                        <td><span class="inline_code">78A5636F</span></td>
+                        <td><span class="inline_code">84C87814</span></td>
+                        <td><span class="inline_code">8CC70208</span></td>
+                        <td><span class="inline_code">90BEFFFA</span></td>
+                        <td><span class="inline_code">A4506CEB</span></td>
+                        <td><span class="inline_code">BEF9A3F7</span></td>
+                        <td><span class="inline_code">C67178F2</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="paragraph">
+            SHA2-384/512常数$K$表
+        </div>
+        <div class="table_area">
+            <table>
+                <tbody>
+                <tr>
+                    <td><span class="inline_code">428A2F98D728AE22</span></td>
+                    <td><span class="inline_code">7137449123EF65CD</span></td>
+                    <td><span class="inline_code">B5C0FBCFEC4D3B2F</span></td>
+                    <td><span class="inline_code">E9B5DBA58189DBBC</span></td>
+                    <td><span class="inline_code">3956C25BF348B538</span></td>
+                    <td><span class="inline_code">59F111F1B605D019</span></td>
+                    <td><span class="inline_code">923F82A4AF194F9B</span></td>
+                    <td><span class="inline_code">AB1C5ED5DA6D8118</span></td>
+                </tr>
+                <tr>
+                    <td><span class="inline_code">D807AA98A3030242</span></td>
+                    <td><span class="inline_code">12835B0145706FBE</span></td>
+                    <td><span class="inline_code">243185BE4EE4B28C</span></td>
+                    <td><span class="inline_code">550C7DC3D5FFB4E2</span></td>
+                    <td><span class="inline_code">72BE5D74F27B896F</span></td>
+                    <td><span class="inline_code">80DEB1FE3B1696B1</span></td>
+                    <td><span class="inline_code">9BDC06A725C71235</span></td>
+                    <td><span class="inline_code">C19BF174CF692694</span></td>
+                </tr>
+                <tr>
+                    <td><span class="inline_code">E49B69C19EF14AD2</span></td>
+                    <td><span class="inline_code">EFBE4786384F25E3</span></td>
+                    <td><span class="inline_code">0FC19DC68B8CD5B5</span></td>
+                    <td><span class="inline_code">240CA1CC77AC9C65</span></td>
+                    <td><span class="inline_code">2DE92C6F592B0275</span></td>
+                    <td><span class="inline_code">4A7484AA6EA6E483</span></td>
+                    <td><span class="inline_code">5CB0A9DCBD41FBD4</span></td>
+                    <td><span class="inline_code">76F988DA831153B5</span></td>
+                </tr>
+                <tr>
+                    <td><span class="inline_code">983E5152EE66DFAB</span></td>
+                    <td><span class="inline_code">A831C66D2DB43210</span></td>
+                    <td><span class="inline_code">B00327C898FB213F</span></td>
+                    <td><span class="inline_code">BF597FC7BEEF0EE4</span></td>
+                    <td><span class="inline_code">C6E00BF33DA88FC2</span></td>
+                    <td><span class="inline_code">D5A79147930AA725</span></td>
+                    <td><span class="inline_code">06CA6351E003826F</span></td>
+                    <td><span class="inline_code">142929670A0E6E70</span></td>
+                </tr>
+                <tr>
+                    <td><span class="inline_code">27B70A8546D22FFC</span></td>
+                    <td><span class="inline_code">2E1B21385C26C926</span></td>
+                    <td><span class="inline_code">4D2C6DFC5AC42AED</span></td>
+                    <td><span class="inline_code">53380D139D95B3DF</span></td>
+                    <td><span class="inline_code">650A73548BAF63DE</span></td>
+                    <td><span class="inline_code">766A0ABB3C77B2A8</span></td>
+                    <td><span class="inline_code">81C2C92E47EDAEE6</span></td>
+                    <td><span class="inline_code">92722C851482353B</span></td>
+                </tr>
+                <tr>
+                    <td><span class="inline_code">A2BFE8A14CF10364</span></td>
+                    <td><span class="inline_code">A81A664BBC423001</span></td>
+                    <td><span class="inline_code">C24B8B70D0F89791</span></td>
+                    <td><span class="inline_code">C76C51A30654BE30</span></td>
+                    <td><span class="inline_code">D192E819D6EF5218</span></td>
+                    <td><span class="inline_code">D69906245565A910</span></td>
+                    <td><span class="inline_code">F40E35855771202A</span></td>
+                    <td><span class="inline_code">106AA07032BBD1B8</span></td>
+                </tr>
+                <tr>
+                    <td><span class="inline_code">19A4C116B8D2D0C8</span></td>
+                    <td><span class="inline_code">1E376C085141AB53</span></td>
+                    <td><span class="inline_code">2748774CDF8EEB99</span></td>
+                    <td><span class="inline_code">34B0BCB5E19B48A8</span></td>
+                    <td><span class="inline_code">391C0CB3C5C95A63</span></td>
+                    <td><span class="inline_code">4ED8AA4AE3418ACB</span></td>
+                    <td><span class="inline_code">5B9CCA4F7763E373</span></td>
+                    <td><span class="inline_code">682E6FF3D6B2B8A3</span></td>
+                </tr>
+                <tr>
+                    <td><span class="inline_code">748F82EE5DEFB2FC</span></td>
+                    <td><span class="inline_code">78A5636F43172F60</span></td>
+                    <td><span class="inline_code">84C87814A1F0AB72</span></td>
+                    <td><span class="inline_code">8CC702081A6439EC</span></td>
+                    <td><span class="inline_code">90BEFFFA23631E28</span></td>
+                    <td><span class="inline_code">A4506CEBDE82BDE9</span></td>
+                    <td><span class="inline_code">BEF9A3F7B2C67915</span></td>
+                    <td><span class="inline_code">C67178F2E372532B</span></td>
+                </tr>
+                <tr>
+                    <td><span class="inline_code">CA273ECEEA26619C</span></td>
+                    <td><span class="inline_code">D186B8C721C0C207</span></td>
+                    <td><span class="inline_code">EADA7DD6CDE0EB1E</span></td>
+                    <td><span class="inline_code">F57D4F7FEE6ED178</span></td>
+                    <td><span class="inline_code">06F067AA72176FBA</span></td>
+                    <td><span class="inline_code">0A637DC5A2C898A6</span></td>
+                    <td><span class="inline_code">113F9804BEF90DAE</span></td>
+                    <td><span class="inline_code">1B710B35131C471B</span></td>
+                </tr>
+                <tr>
+                    <td><span class="inline_code">28DB77F523047D84</span></td>
+                    <td><span class="inline_code">32CAAB7B40C72493</span></td>
+                    <td><span class="inline_code">3C9EBE0A15C9BEBC</span></td>
+                    <td><span class="inline_code">431D67C49C100D4C</span></td>
+                    <td><span class="inline_code">4CC5D4BECB3E42B6</span></td>
+                    <td><span class="inline_code">597F299CFC657E2A</span></td>
+                    <td><span class="inline_code">5FCB6FAB3AD6FAEC</span></td>
+                    <td><span class="inline_code">6C44198C4A475817</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="paragraph">
+            当然，这样可以通过如下的代码生成
+        </div>
+        <code-area>
+            <code-opinion language="C/C++">
+<pre style="white-space:pre-wrap;word-wrap:break-word;background-color:#1F1F1F;color:#CCCCCC"><code><span><span style="color:#C586C0">#include</span><span style="color:#CE9178"> &#x3C;array></span></span>
+<span><span style="color:#C586C0">#include</span><span style="color:#CE9178"> &#x3C;vector></span></span>
+<span><span style="color:#C586C0">#include</span><span style="color:#CE9178"> &#x3C;cstdint></span></span>
+<span><span style="color:#C586C0">#include</span><span style="color:#CE9178"> &#x3C;iostream></span></span>
+<span><span style="color:#C586C0">using</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#D4D4D4"> =</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::</span><span style="color:#4EC9B0">array</span><span style="color:#CCCCCC">&#x3C;</span><span style="color:#569CD6">uint64_t</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">>;</span></span>
+<span><span style="color:#4EC9B0">std</span><span style="color:#CCCCCC">::</span><span style="color:#4EC9B0">strong_ordering</span><span style="color:#C586C0"> operator&#x3C;=></span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#C586C0">    if</span><span style="color:#CCCCCC"> (</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">!=</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">])</span></span>
+<span><span style="color:#C586C0">        return</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;=></span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;=></span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#4EC9B0">uint128_t</span><span style="color:#C586C0"> operator&#x3C;&#x3C;</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> shift</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#CCCCCC">    shift </span><span style="color:#D4D4D4">%=</span><span style="color:#B5CEA8"> 128</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#C586C0">    if</span><span style="color:#CCCCCC"> (shift </span><span style="color:#D4D4D4">>=</span><span style="color:#B5CEA8"> 64</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#C586C0">        return</span><span style="color:#CCCCCC"> { </span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#CCCCCC"> (shift </span><span style="color:#D4D4D4">-</span><span style="color:#B5CEA8"> 64</span><span style="color:#CCCCCC">) };</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> { </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#CCCCCC"> shift, (</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#CCCCCC"> shift) </span><span style="color:#D4D4D4">|</span><span style="color:#CCCCCC"> (</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">>></span><span style="color:#CCCCCC"> (</span><span style="color:#B5CEA8">64</span><span style="color:#D4D4D4"> -</span><span style="color:#CCCCCC"> shift)) };</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#569CD6">void</span><span style="color:#DCDCAA"> u64add</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> carry_in</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t*</span><span style="color:#9CDCFE"> carry</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t*</span><span style="color:#9CDCFE"> result</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> low </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> (a </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#B5CEA8"> 0xFFFFFFFF</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> (b </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#B5CEA8"> 0xFFFFFFFF</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> carry_in;</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> high </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> (a </span><span style="color:#D4D4D4">>></span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> (b </span><span style="color:#D4D4D4">>></span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> (low </span><span style="color:#D4D4D4">>></span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#D4D4D4">    *</span><span style="color:#CCCCCC">carry </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> high </span><span style="color:#D4D4D4">>></span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#D4D4D4">    *</span><span style="color:#CCCCCC">result </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> high </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#B5CEA8"> 32</span><span style="color:#D4D4D4"> |</span><span style="color:#CCCCCC"> (low </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#B5CEA8"> 0xFFFFFFFF</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#4EC9B0">uint128_t</span><span style="color:#C586C0"> operator+</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#4EC9B0">    uint128_t</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> carry </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#DCDCAA">    u64add</span><span style="color:#CCCCCC">(carry, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">carry, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#DCDCAA">    u64add</span><span style="color:#CCCCCC">(carry, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">carry, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#569CD6">void</span><span style="color:#DCDCAA"> u64sub</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> borrow_in</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t*</span><span style="color:#9CDCFE"> borrow</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t*</span><span style="color:#9CDCFE"> result</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> carry </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> b </span><span style="color:#D4D4D4">==</span><span style="color:#B5CEA8"> 0xFFFFFFFFFFFFFFFF</span><span style="color:#D4D4D4"> &#x26;&#x26;</span><span style="color:#CCCCCC"> borrow_in </span><span style="color:#D4D4D4">==</span><span style="color:#B5CEA8"> 1</span><span style="color:#D4D4D4"> ?</span><span style="color:#B5CEA8"> 1</span><span style="color:#D4D4D4"> :</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#CCCCCC">    b </span><span style="color:#D4D4D4">+=</span><span style="color:#CCCCCC"> borrow_in;</span></span>
+<span><span style="color:#569CD6">    bool</span><span style="color:#CCCCCC"> com </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">>=</span><span style="color:#CCCCCC"> b;</span></span>
+<span><span style="color:#D4D4D4">    *</span><span style="color:#CCCCCC">borrow </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> carry </span><span style="color:#D4D4D4">|</span><span style="color:#D4D4D4"> !</span><span style="color:#CCCCCC">com;</span></span>
+<span><span style="color:#D4D4D4">    *</span><span style="color:#CCCCCC">result </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> com </span><span style="color:#D4D4D4">?</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">-</span><span style="color:#CCCCCC"> b </span><span style="color:#D4D4D4">:</span><span style="color:#CCCCCC"> (</span><span style="color:#D4D4D4">~</span><span style="color:#CCCCCC">(b </span><span style="color:#D4D4D4">-</span><span style="color:#CCCCCC"> a) </span><span style="color:#D4D4D4">+</span><span style="color:#B5CEA8"> 1</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#4EC9B0">uint128_t</span><span style="color:#C586C0"> operator-</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint128_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#4EC9B0">    uint128_t</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> borrow </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#DCDCAA">    u64sub</span><span style="color:#CCCCCC">(borrow, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">borrow, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#DCDCAA">    u64sub</span><span style="color:#CCCCCC">(borrow, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">borrow, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#C586C0">using</span><span style="color:#4EC9B0"> uint192_t</span><span style="color:#D4D4D4"> =</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::</span><span style="color:#4EC9B0">array</span><span style="color:#CCCCCC">&#x3C;</span><span style="color:#569CD6">uint64_t</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">3</span><span style="color:#CCCCCC">>;</span></span>
+<span><span style="color:#4EC9B0">std</span><span style="color:#CCCCCC">::</span><span style="color:#4EC9B0">strong_ordering</span><span style="color:#C586C0"> operator&#x3C;=></span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint192_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint192_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#C586C0">    if</span><span style="color:#CCCCCC"> (</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">!=</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">])</span></span>
+<span><span style="color:#C586C0">        return</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;=></span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#C586C0">    if</span><span style="color:#CCCCCC"> (</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">!=</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">])</span></span>
+<span><span style="color:#C586C0">        return</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;=></span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;=></span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#4EC9B0">uint192_t</span><span style="color:#C586C0"> operator&#x3C;&#x3C;</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint192_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> shift</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#CCCCCC">    shift </span><span style="color:#D4D4D4">%=</span><span style="color:#B5CEA8"> 192</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#4EC9B0">    uint192_t</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#C586C0">    if</span><span style="color:#CCCCCC"> (shift </span><span style="color:#D4D4D4">>=</span><span style="color:#B5CEA8"> 128</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#CCCCCC">        shift </span><span style="color:#D4D4D4">-=</span><span style="color:#B5CEA8"> 128</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">        result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#CCCCCC"> shift;</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#C586C0">    else</span><span style="color:#C586C0"> if</span><span style="color:#CCCCCC"> (shift </span><span style="color:#D4D4D4">>=</span><span style="color:#B5CEA8"> 64</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#CCCCCC">        shift </span><span style="color:#D4D4D4">-=</span><span style="color:#B5CEA8"> 64</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">        result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#CCCCCC"> shift;</span></span>
+<span><span style="color:#9CDCFE">        result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#CCCCCC"> shift </span><span style="color:#D4D4D4">|</span><span style="color:#CCCCCC"> (</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">>></span><span style="color:#CCCCCC"> (</span><span style="color:#B5CEA8">64</span><span style="color:#D4D4D4"> -</span><span style="color:#CCCCCC"> shift));</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#C586C0">    else</span><span style="color:#C586C0"> if</span><span style="color:#CCCCCC"> (shift </span><span style="color:#D4D4D4">></span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#9CDCFE">        result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#CCCCCC"> shift;</span></span>
+<span><span style="color:#9CDCFE">        result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#CCCCCC"> shift </span><span style="color:#D4D4D4">|</span><span style="color:#CCCCCC"> (</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">>></span><span style="color:#CCCCCC"> (</span><span style="color:#B5CEA8">64</span><span style="color:#D4D4D4"> -</span><span style="color:#CCCCCC"> shift));</span></span>
+<span><span style="color:#9CDCFE">        result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#CCCCCC"> shift </span><span style="color:#D4D4D4">|</span><span style="color:#CCCCCC"> (</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">>></span><span style="color:#CCCCCC"> (</span><span style="color:#B5CEA8">64</span><span style="color:#D4D4D4"> -</span><span style="color:#CCCCCC"> shift));</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#C586C0">    else</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#CCCCCC">        result </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a;</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#4EC9B0">uint192_t</span><span style="color:#C586C0"> operator+</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint192_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint192_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#4EC9B0">    uint192_t</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> carry </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#DCDCAA">    u64add</span><span style="color:#CCCCCC">(carry, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">carry, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#DCDCAA">    u64add</span><span style="color:#CCCCCC">(carry, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">carry, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#DCDCAA">    u64add</span><span style="color:#CCCCCC">(carry, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">carry, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#4EC9B0">uint192_t</span><span style="color:#C586C0"> operator-</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint192_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint192_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#4EC9B0">    uint192_t</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> borrow </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#DCDCAA">    u64sub</span><span style="color:#CCCCCC">(borrow, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">borrow, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#DCDCAA">    u64sub</span><span style="color:#CCCCCC">(borrow, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">borrow, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#DCDCAA">    u64sub</span><span style="color:#CCCCCC">(borrow, </span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">], </span><span style="color:#9CDCFE">b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">], </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">borrow, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#9CDCFE">result</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">]);</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#569CD6">void</span><span style="color:#DCDCAA"> u64mul</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t*</span><span style="color:#9CDCFE"> result_high</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t*</span><span style="color:#9CDCFE"> result_low</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#569CD6">    uint32_t</span><span style="color:#CCCCCC"> a0 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#B5CEA8"> 0xffffffff</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#569CD6">    uint32_t</span><span style="color:#CCCCCC"> a1 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">>></span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#569CD6">    uint32_t</span><span style="color:#CCCCCC"> b0 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> b </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#B5CEA8"> 0xffffffff</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#569CD6">    uint32_t</span><span style="color:#CCCCCC"> b1 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> b </span><span style="color:#D4D4D4">>></span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">;</span></span>
+<span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> low </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> (</span><span style="color:#569CD6">uint64_t</span><span style="color:#CCCCCC">)a0 </span><span style="color:#D4D4D4">*</span><span style="color:#CCCCCC"> b0;</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> high </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> (</span><span style="color:#569CD6">uint64_t</span><span style="color:#CCCCCC">)a1 </span><span style="color:#D4D4D4">*</span><span style="color:#CCCCCC"> b1;</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> mid0 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> (</span><span style="color:#569CD6">uint64_t</span><span style="color:#CCCCCC">)a0 </span><span style="color:#D4D4D4">*</span><span style="color:#CCCCCC"> b1;</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> mid1 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> (</span><span style="color:#569CD6">uint64_t</span><span style="color:#CCCCCC">)a1 </span><span style="color:#D4D4D4">*</span><span style="color:#CCCCCC"> b0;</span></span>
+<span><span style="color:#C586C0">    if</span><span style="color:#CCCCCC"> (mid0 </span><span style="color:#D4D4D4">></span><span style="color:#B5CEA8"> 0xffffffffffffffff</span><span style="color:#D4D4D4"> -</span><span style="color:#CCCCCC"> mid1)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#CCCCCC">        high </span><span style="color:#D4D4D4">+=</span><span style="color:#B5CEA8"> 0x100000000</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#CCCCCC">    mid0 </span><span style="color:#D4D4D4">+=</span><span style="color:#CCCCCC"> mid1;</span></span>
+<span><span style="color:#CCCCCC">    high </span><span style="color:#D4D4D4">+=</span><span style="color:#CCCCCC"> (mid0) </span><span style="color:#D4D4D4">>></span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#C586C0">    if</span><span style="color:#CCCCCC"> (low </span><span style="color:#D4D4D4">></span><span style="color:#B5CEA8"> 0xffffffffffffffff</span><span style="color:#D4D4D4"> -</span><span style="color:#CCCCCC"> (mid0 </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">))</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#CCCCCC">        high</span><span style="color:#D4D4D4">++</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#CCCCCC">    low </span><span style="color:#D4D4D4">+=</span><span style="color:#CCCCCC"> mid0 </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">;</span></span>
+<span></span>
+<span><span style="color:#D4D4D4">    *</span><span style="color:#CCCCCC">result_high </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> high;</span></span>
+<span><span style="color:#D4D4D4">    *</span><span style="color:#CCCCCC">result_low </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> low;</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#4EC9B0">uint192_t</span><span style="color:#C586C0"> operator*</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint192_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> now_h </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">, now_l </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">, carry </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">, i </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#4EC9B0">    uint192_t</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#C586C0">    for</span><span style="color:#CCCCCC"> (; i </span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">size</span><span style="color:#CCCCCC">(); </span><span style="color:#D4D4D4">++</span><span style="color:#CCCCCC">i)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#DCDCAA">        u64mul</span><span style="color:#CCCCCC">(</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">[i], b, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">now_h, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">now_l);</span></span>
+<span><span style="color:#DCDCAA">        u64add</span><span style="color:#CCCCCC">(</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">, carry, now_l, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">carry, </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC">now_l);</span></span>
+<span><span style="color:#CCCCCC">        carry </span><span style="color:#D4D4D4">+=</span><span style="color:#CCCCCC"> now_h;</span></span>
+<span><span style="color:#9CDCFE">        result</span><span style="color:#CCCCCC">[i] </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> now_l;</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#4EC9B0">uint192_t</span><span style="color:#C586C0"> operator*</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint192_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> uint192_t</span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#4EC9B0">    uint192_t</span><span style="color:#CCCCCC"> r0 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">*</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#4EC9B0">    uint192_t</span><span style="color:#CCCCCC"> r1 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">*</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#4EC9B0">    uint192_t</span><span style="color:#CCCCCC"> r2 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">*</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#9CDCFE">    r1</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> r1</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#9CDCFE">    r1</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> r1</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#9CDCFE">    r1</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">    r2</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> r2</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#9CDCFE">    r2</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">    r2</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> r0 </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> r1 </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> r2;</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#569CD6">uint64_t</span><span style="color:#DCDCAA"> cube_root</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> p_</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#4EC9B0">    uint192_t</span><span style="color:#CCCCCC"> p </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> { p_, </span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC"> };</span></span>
+<span><span style="color:#4EC9B0">    uint192_t</span><span style="color:#CCCCCC"> r </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> { </span><span style="color:#B5CEA8">10</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC"> };</span></span>
+<span><span style="color:#C586C0">    while</span><span style="color:#CCCCCC"> (</span><span style="color:#9CDCFE">r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">*</span><span style="color:#9CDCFE"> r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">*</span><span style="color:#9CDCFE"> r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">></span><span style="color:#9CDCFE"> p</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">])</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#9CDCFE">        r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">]</span><span style="color:#D4D4D4">--</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#9CDCFE">    p</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">-=</span><span style="color:#9CDCFE"> r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">*</span><span style="color:#9CDCFE"> r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">*</span><span style="color:#9CDCFE"> r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#C586C0">    for</span><span style="color:#CCCCCC"> (</span><span style="color:#569CD6">int</span><span style="color:#CCCCCC"> i </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">; i </span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#B5CEA8"> 64</span><span style="color:#CCCCCC">; i</span><span style="color:#D4D4D4">++</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#CCCCCC">        p </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> p </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#B5CEA8"> 3</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#4EC9B0">        uint192_t</span><span style="color:#CCCCCC"> t </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> r </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#B5CEA8"> 2</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">        t</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">|=</span><span style="color:#B5CEA8"> 2</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#CCCCCC">        t </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> ((r </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#B5CEA8"> 1</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> r) </span><span style="color:#D4D4D4">*</span><span style="color:#CCCCCC"> t;</span></span>
+<span><span style="color:#9CDCFE">        t</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">|=</span><span style="color:#B5CEA8"> 1</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#CCCCCC">        r </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> r </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#B5CEA8"> 1</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#C586C0">        if</span><span style="color:#CCCCCC"> (t </span><span style="color:#D4D4D4">&#x3C;=</span><span style="color:#CCCCCC"> p)</span></span>
+<span><span style="color:#CCCCCC">        {</span></span>
+<span><span style="color:#CCCCCC">            p </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> p </span><span style="color:#D4D4D4">-</span><span style="color:#CCCCCC"> t;</span></span>
+<span><span style="color:#9CDCFE">            r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">|=</span><span style="color:#B5CEA8"> 1</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#CCCCCC">        }</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#9CDCFE"> r</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#569CD6">int</span><span style="color:#DCDCAA"> main</span><span style="color:#CCCCCC">()</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#569CD6">    const</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::vector</span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#569CD6">uint64_t</span><span style="color:#D4D4D4">></span><span style="color:#CCCCCC"> primes </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> { </span></span>
+<span><span style="color:#B5CEA8">        2</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">3</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">5</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">7</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">11</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">13</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">17</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">19</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">23</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">29</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">31</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">37</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">41</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">43</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">47</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">53</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">59</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">        61</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">67</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">71</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">73</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">79</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">83</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">89</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">97</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">101</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">103</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">107</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">109</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">113</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">127</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">        131</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">137</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">139</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">149</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">151</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">157</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">163</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">167</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">173</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">179</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">181</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">191</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">        193</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">197</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">199</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">211</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">223</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">227</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">229</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">233</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">239</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">241</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">251</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">257</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">        263</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">269</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">271</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">277</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">281</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">283</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">293</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">307</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">311</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">313</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">317</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">331</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">        337</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">347</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">349</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">353</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">359</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">367</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">373</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">379</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">383</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">389</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">397</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">401</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">409</span><span style="color:#CCCCCC"> };</span></span>
+<span><span style="color:#C586C0">    for</span><span style="color:#CCCCCC"> (</span><span style="color:#569CD6">auto</span><span style="color:#CCCCCC"> prime : primes)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#4EC9B0">        std</span><span style="color:#CCCCCC">::cout </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::</span><span style="color:#DCDCAA">format</span><span style="color:#CCCCCC">(</span><span style="color:#CE9178">"{:03d}: {:X}"</span><span style="color:#CCCCCC">, prime, </span><span style="color:#DCDCAA">cube_root</span><span style="color:#CCCCCC">(prime)) </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::endl;</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#CCCCCC">}</span></span></code></pre>
+            </code-opinion>
+            <code-opinion language="Python">
+<pre style="white-space:pre-wrap;word-wrap:break-word;background-color:#1F1F1F;color:#CCCCCC"><code><span><span style="color:#569CD6">def</span><span style="color:#DCDCAA"> cuber</span><span style="color:#CCCCCC">(</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">: </span><span style="color:#4EC9B0">int</span><span style="color:#CCCCCC">):</span></span>
+<span><span style="color:#CCCCCC">    r </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 10</span></span>
+<span><span style="color:#C586C0">    while</span><span style="color:#CCCCCC"> r</span><span style="color:#D4D4D4">**</span><span style="color:#B5CEA8">3</span><span style="color:#D4D4D4"> ></span><span style="color:#CCCCCC"> a:</span></span>
+<span><span style="color:#CCCCCC">        r </span><span style="color:#D4D4D4">-=</span><span style="color:#B5CEA8"> 1</span></span>
+<span><span style="color:#CCCCCC">    a </span><span style="color:#D4D4D4">-=</span><span style="color:#CCCCCC"> r</span><span style="color:#D4D4D4">**</span><span style="color:#B5CEA8">3</span></span>
+<span><span style="color:#C586C0">    for</span><span style="color:#CCCCCC"> _ </span><span style="color:#C586C0">in</span><span style="color:#DCDCAA"> range</span><span style="color:#CCCCCC">(</span><span style="color:#B5CEA8">64</span><span style="color:#CCCCCC">):</span></span>
+<span><span style="color:#CCCCCC">        a </span><span style="color:#D4D4D4">&#x3C;&#x3C;=</span><span style="color:#B5CEA8"> 3</span></span>
+<span><span style="color:#CCCCCC">        t </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> ((r</span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">)</span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC">r)</span><span style="color:#D4D4D4">*</span><span style="color:#CCCCCC">((r</span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">)</span><span style="color:#D4D4D4">+</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">)</span><span style="color:#D4D4D4">+</span><span style="color:#B5CEA8">1</span></span>
+<span><span style="color:#CCCCCC">        r </span><span style="color:#D4D4D4">&#x3C;&#x3C;=</span><span style="color:#B5CEA8"> 1</span></span>
+<span><span style="color:#C586C0">        if</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">>=</span><span style="color:#CCCCCC"> t:</span></span>
+<span><span style="color:#CCCCCC">            a </span><span style="color:#D4D4D4">-=</span><span style="color:#CCCCCC"> t</span></span>
+<span><span style="color:#CCCCCC">            r </span><span style="color:#D4D4D4">+=</span><span style="color:#B5CEA8"> 1</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> r</span></span>
+<span></span>
+<span><span style="color:#CCCCCC">primes </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> [</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">3</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">5</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">7</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">11</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">13</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">17</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">19</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">23</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">29</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">31</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">37</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">41</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">43</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">47</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">53</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">59</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">          61</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">67</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">71</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">73</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">79</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">83</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">89</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">97</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">101</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">103</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">107</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">109</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">113</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">127</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">          131</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">137</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">139</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">149</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">151</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">157</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">163</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">167</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">173</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">179</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">181</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">191</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">          193</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">197</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">199</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">211</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">223</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">227</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">229</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">233</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">239</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">241</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">251</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">257</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">          263</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">269</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">271</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">277</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">281</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">283</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">293</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">307</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">311</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">313</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">317</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">331</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">          337</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">347</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">349</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">353</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">359</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">367</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">373</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">379</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">383</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">389</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">397</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">401</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">409</span><span style="color:#CCCCCC">]</span></span>
+<span><span style="color:#C586C0">for</span><span style="color:#CCCCCC"> a </span><span style="color:#C586C0">in</span><span style="color:#CCCCCC"> primes:</span></span>
+<span><span style="color:#CCCCCC">    r </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> cuber(a)</span></span>
+<span><span style="color:#DCDCAA">    print</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">f</span><span style="color:#CE9178">"</span><span style="color:#569CD6">{</span><span style="color:#CCCCCC">a</span><span style="color:#569CD6">:03d}</span><span style="color:#CE9178"> : </span><span style="color:#569CD6">{</span><span style="color:#CCCCCC">r</span><span style="color:#D4D4D4">&#x26;</span><span style="color:#569CD6">0x</span><span style="color:#B5CEA8">FFFFFFFFFFFFFFFF</span><span style="color:#569CD6">:016X}</span><span style="color:#CE9178">"</span><span style="color:#CCCCCC">)</span></span></code></pre>
+            </code-opinion>
+        </code-area>
+        <div class="paragraph">
+            （不支持长整数的C++需要实现128和192整数的操作，gcc/llvm可以用__uint128_t简化）。Python的非常简洁。
+        </div>
+        <h3>混淆计算</h3>
+        <div class="paragraph">
+            接下来计算64轮（224和256）或80轮（224和256），记当前轮为$i$,其取值从0开始到63（224和256）或79（224和256）
+        </div>
+        <div class="paragraph">
+            取扩展后分组的偏移量为$i$的$p$位（$p=32$ 224和256）（$p=64$ 384和512），记为$w$。再取常量$k=K_{i}$
+        </div>
+        <div class="paragraph">
+            将初始值$I$分为$I^{p}_0|I^{p}_1|I^{p}_2|I^{p}_3|I^{p}_4|I^{p}_5|I^{p}_6|I^{p}_7|I^{p}_8$，分别记为$a|b|c|d|e|f|g|h$
+        </div>
+        <div class="paragraph">
+            然后依次做以下操作
+        </div>
+        <div class="paragraph">
+            $$ S_0 = a \ggg 2 \oplus a \ggg 13 \oplus a \ggg 22 $$
+        </div>
+        <div class="paragraph">
+            $$ M = (a \& b) \oplus (a \& c) \oplus (b \& c) $$
+        </div>
+        <div class="paragraph">
+            $$ T_2 = S_0 + M $$
+        </div>
+        <div class="paragraph">
+            $$ S_1 = e \ggg 6 \oplus e \ggg 11 \oplus e \ggg 25 $$
+        </div>
+        <div class="paragraph">
+            $$ N = (e \& f) \oplus ((\sim e) \& g) $$
+        </div>
+        <div class="paragraph">
+            $$ T_1 = h + S_1 + N + k + w $$
+        </div>
+        <div class="paragraph">
+            通过上述变量更新$d$和$h$的值
+        </div>
+        <div class="paragraph">
+            $$ h = T_1 + T_2 $$
+        </div>
+        <div class="paragraph">
+            $$ d = T_1 + d $$
+        </div>
+        <div class="paragraph">
+            再轮换更新值
+        </div>
+        <div class="paragraph">
+            $$ a|b|c|d|e|f|g|h \Rightarrow h|a|b|c|d|e|f|g = I' $$
+        </div>
+        <div class="paragraph">
+            将$I'$作为下一轮的初始值，继续计算直到达到轮次
+        </div>
+        <div class="paragraph">
+            将最后一轮的$I'$和初始值$I$，做下列操作得到$H$
+        </div>
+        <div class="paragraph">
+            $$ H = I^{p}_0 + I'^{p}_0|I^{p}_1 + I'^{p}_1|I^{p}_2 + I'^{p}_2|I^{p}_3 + I'^{p}_3|I^{p}_4 + I'^{p}_4|I^{p}_5 + I'^{p}_5|I^{p}_6 + I'^{p}_6|I^{p}_7 + I'^{p}_7  $$
+        </div>
+        <div class="paragraph">
+            $H$则为消息的散列值
+        </div>
+        <div class="paragraph">
+            下面的动画展示了单个分组对散列值的更新情况
+        </div>
+        <animation-area id="sha2_update" speed="50">
+            <div>拓展分组</div>
+            <binary-input id="sha2_update_block_input"></binary-input>
+            <div>初始值</div>
+            <binary-input id="sha2_update_init_input"></binary-input>
+        </animation-area>
+        <h2>实现</h2>
+        <div class="paragraph">
+            最后给出SHA2-256的代码参考实现
+        </div>
+        <code-area>
+            <code-opinion language="C/C++">
+<pre style="background-color:#1F1F1F;color:#CCCCCC"><code><span><span style="color:#C586C0">#include</span><span style="color:#CE9178"> &#x3C;array></span></span>
+<span><span style="color:#C586C0">#include</span><span style="color:#CE9178"> &#x3C;vector></span></span>
+<span><span style="color:#C586C0">#include</span><span style="color:#CE9178"> &#x3C;cstdint></span></span>
+<span><span style="color:#C586C0">#include</span><span style="color:#CE9178"> &#x3C;iostream></span></span>
+<span></span>
+<span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::array</span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#569CD6">uint32_t</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">64</span><span style="color:#D4D4D4">></span><span style="color:#CCCCCC"> ks </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> {</span></span>
+<span><span style="color:#B5CEA8">    0x428a2f98</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x71374491</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xb5c0fbcf</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xe9b5dba5</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x3956c25b</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x59f111f1</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x923f82a4</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xab1c5ed5</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">    0xd807aa98</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x12835b01</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x243185be</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x550c7dc3</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x72be5d74</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x80deb1fe</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x9bdc06a7</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xc19bf174</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">    0xe49b69c1</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xefbe4786</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x0fc19dc6</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x240ca1cc</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x2de92c6f</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x4a7484aa</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x5cb0a9dc</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x76f988da</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">    0x983e5152</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xa831c66d</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xb00327c8</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xbf597fc7</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xc6e00bf3</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xd5a79147</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x06ca6351</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x14292967</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">    0x27b70a85</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x2e1b2138</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x4d2c6dfc</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x53380d13</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x650a7354</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x766a0abb</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x81c2c92e</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x92722c85</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">    0xa2bfe8a1</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xa81a664b</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xc24b8b70</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xc76c51a3</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xd192e819</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xd6990624</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xf40e3585</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x106aa070</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">    0x19a4c116</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x1e376c08</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x2748774c</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x34b0bcb5</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x391c0cb3</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x4ed8aa4a</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x5b9cca4f</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x682e6ff3</span><span style="color:#CCCCCC">,</span></span>
+<span><span style="color:#B5CEA8">    0x748f82ee</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x78a5636f</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x84c87814</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x8cc70208</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0x90befffa</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xa4506ceb</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xbef9a3f7</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">0xc67178f2</span><span style="color:#CCCCCC"> };</span></span>
+<span><span style="color:#569CD6">uint8_t</span><span style="color:#DCDCAA"> index</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::</span><span style="color:#4EC9B0">vector</span><span style="color:#CCCCCC">&#x3C;</span><span style="color:#569CD6">uint8_t</span><span style="color:#CCCCCC">></span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> front</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::</span><span style="color:#4EC9B0">vector</span><span style="color:#CCCCCC">&#x3C;</span><span style="color:#569CD6">uint8_t</span><span style="color:#CCCCCC">></span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> back</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint64_t</span><span style="color:#9CDCFE"> i</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#C586C0">    if</span><span style="color:#CCCCCC"> (i </span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#9CDCFE"> front</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">size</span><span style="color:#CCCCCC">())</span></span>
+<span><span style="color:#C586C0">        return</span><span style="color:#9CDCFE"> front</span><span style="color:#CCCCCC">[i];</span></span>
+<span><span style="color:#C586C0">    else</span></span>
+<span><span style="color:#C586C0">        return</span><span style="color:#9CDCFE"> back</span><span style="color:#CCCCCC">[i </span><span style="color:#D4D4D4">-</span><span style="color:#9CDCFE"> front</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">size</span><span style="color:#CCCCCC">()];</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#569CD6">uint32_t</span><span style="color:#DCDCAA"> rotr</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">uint32_t</span><span style="color:#9CDCFE"> x</span><span style="color:#CCCCCC">, </span><span style="color:#569CD6">uint32_t</span><span style="color:#9CDCFE"> n</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#CCCCCC">    n </span><span style="color:#D4D4D4">%=</span><span style="color:#B5CEA8"> 32</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> (x </span><span style="color:#D4D4D4">>></span><span style="color:#CCCCCC"> n) </span><span style="color:#D4D4D4">|</span><span style="color:#CCCCCC"> (x </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#CCCCCC"> (</span><span style="color:#B5CEA8">32</span><span style="color:#D4D4D4"> -</span><span style="color:#CCCCCC"> n));</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#4EC9B0">std</span><span style="color:#CCCCCC">::</span><span style="color:#4EC9B0">vector</span><span style="color:#CCCCCC">&#x3C;</span><span style="color:#569CD6">uint8_t</span><span style="color:#CCCCCC">> </span><span style="color:#DCDCAA">sha2_256</span><span style="color:#CCCCCC">(</span><span style="color:#569CD6">const</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::</span><span style="color:#4EC9B0">vector</span><span style="color:#CCCCCC">&#x3C;</span><span style="color:#569CD6">uint8_t</span><span style="color:#CCCCCC">></span><span style="color:#569CD6">&#x26;</span><span style="color:#9CDCFE"> data</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#4EC9B0">    std</span><span style="color:#CCCCCC">::vector</span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#569CD6">uint8_t</span><span style="color:#D4D4D4">></span><span style="color:#CCCCCC"> last </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> { </span><span style="color:#B5CEA8">0x80</span><span style="color:#CCCCCC"> };</span></span>
+<span><span style="color:#C586C0">    while</span><span style="color:#CCCCCC"> ((</span><span style="color:#9CDCFE">last</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">size</span><span style="color:#CCCCCC">() </span><span style="color:#D4D4D4">+</span><span style="color:#9CDCFE"> data</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">size</span><span style="color:#CCCCCC">()) </span><span style="color:#D4D4D4">%</span><span style="color:#B5CEA8"> 64</span><span style="color:#D4D4D4"> !=</span><span style="color:#B5CEA8"> 56</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#9CDCFE">        last</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">push_back</span><span style="color:#CCCCCC">(</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#569CD6">    uint64_t</span><span style="color:#CCCCCC"> len </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> data</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">size</span><span style="color:#CCCCCC">() </span><span style="color:#D4D4D4">*</span><span style="color:#B5CEA8"> 8</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#C586C0">    for</span><span style="color:#CCCCCC"> (</span><span style="color:#569CD6">int</span><span style="color:#CCCCCC"> i </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">; i </span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#B5CEA8"> 8</span><span style="color:#CCCCCC">; i</span><span style="color:#D4D4D4">++</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#9CDCFE">        last</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">push_back</span><span style="color:#CCCCCC">((len </span><span style="color:#D4D4D4">>></span><span style="color:#CCCCCC"> (</span><span style="color:#B5CEA8">56</span><span style="color:#D4D4D4"> -</span><span style="color:#CCCCCC"> i </span><span style="color:#D4D4D4">*</span><span style="color:#B5CEA8"> 8</span><span style="color:#CCCCCC">)) </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#B5CEA8"> 0xff</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#4EC9B0">    std</span><span style="color:#CCCCCC">::array</span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#569CD6">uint32_t</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">64</span><span style="color:#D4D4D4">></span><span style="color:#CCCCCC"> words;</span></span>
+<span><span style="color:#4EC9B0">    std</span><span style="color:#CCCCCC">::array</span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#569CD6">uint32_t</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">8</span><span style="color:#D4D4D4">></span><span style="color:#CCCCCC"> init </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> { </span><span style="color:#B5CEA8">0x6a09e667</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0xbb67ae85</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x3c6ef372</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0xa54ff53a</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x510e527f</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x9b05688c</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x1f83d9ab</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x5be0cd19</span><span style="color:#CCCCCC"> };</span></span>
+<span><span style="color:#4EC9B0">    std</span><span style="color:#CCCCCC">::array</span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#569CD6">uint32_t</span><span style="color:#CCCCCC">, </span><span style="color:#B5CEA8">8</span><span style="color:#D4D4D4">></span><span style="color:#CCCCCC"> hash </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> init;</span></span>
+<span><span style="color:#569CD6">    uint32_t</span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> hash</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">0</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#569CD6">    uint32_t</span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> b </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> hash</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#569CD6">    uint32_t</span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> c </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> hash</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#569CD6">    uint32_t</span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> d </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> hash</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">3</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#569CD6">    uint32_t</span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> e </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> hash</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">4</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#569CD6">    uint32_t</span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> f </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> hash</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">5</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#569CD6">    uint32_t</span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> g </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> hash</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">6</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#569CD6">    uint32_t</span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> h </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> hash</span><span style="color:#CCCCCC">[</span><span style="color:#B5CEA8">7</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#C586C0">    for</span><span style="color:#CCCCCC"> (</span><span style="color:#569CD6">uint64_t</span><span style="color:#CCCCCC"> i </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">; i </span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#9CDCFE"> data</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">size</span><span style="color:#CCCCCC">() </span><span style="color:#D4D4D4">+</span><span style="color:#9CDCFE"> last</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">size</span><span style="color:#CCCCCC">(); i </span><span style="color:#D4D4D4">+=</span><span style="color:#B5CEA8"> 64</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#569CD6">        uint64_t</span><span style="color:#CCCCCC"> j </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#C586C0">        for</span><span style="color:#CCCCCC"> (j </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">; j </span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#B5CEA8"> 64</span><span style="color:#CCCCCC">; </span><span style="color:#D4D4D4">++</span><span style="color:#CCCCCC">j)</span></span>
+<span><span style="color:#CCCCCC">        {</span></span>
+<span><span style="color:#C586C0">            if</span><span style="color:#CCCCCC"> (j </span><span style="color:#D4D4D4">%</span><span style="color:#B5CEA8"> 4</span><span style="color:#D4D4D4"> ==</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">) </span><span style="color:#9CDCFE">words</span><span style="color:#CCCCCC">[j </span><span style="color:#D4D4D4">/</span><span style="color:#B5CEA8"> 4</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">            words</span><span style="color:#CCCCCC">[j </span><span style="color:#D4D4D4">/</span><span style="color:#B5CEA8"> 4</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">&#x3C;&#x3C;=</span><span style="color:#B5CEA8"> 8</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">            words</span><span style="color:#CCCCCC">[j </span><span style="color:#D4D4D4">/</span><span style="color:#B5CEA8"> 4</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">|=</span><span style="color:#DCDCAA"> index</span><span style="color:#CCCCCC">(data, last, i </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> j);</span></span>
+<span><span style="color:#CCCCCC">        }</span></span>
+<span><span style="color:#C586C0">        for</span><span style="color:#CCCCCC"> (j </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">; j </span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#B5CEA8"> 48</span><span style="color:#CCCCCC">; </span><span style="color:#D4D4D4">++</span><span style="color:#CCCCCC">j)</span></span>
+<span><span style="color:#CCCCCC">        {</span></span>
+<span><span style="color:#569CD6">            uint32_t</span><span style="color:#CCCCCC"> s0 </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> words</span><span style="color:#CCCCCC">[j </span><span style="color:#D4D4D4">+</span><span style="color:#B5CEA8"> 1</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#569CD6">            uint32_t</span><span style="color:#CCCCCC"> s1 </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> words</span><span style="color:#CCCCCC">[j </span><span style="color:#D4D4D4">+</span><span style="color:#B5CEA8"> 14</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#569CD6">            uint32_t</span><span style="color:#CCCCCC"> s2 </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> words</span><span style="color:#CCCCCC">[j </span><span style="color:#D4D4D4">+</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#569CD6">            uint32_t</span><span style="color:#CCCCCC"> s3 </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> words</span><span style="color:#CCCCCC">[j </span><span style="color:#D4D4D4">+</span><span style="color:#B5CEA8"> 9</span><span style="color:#CCCCCC">];</span></span>
+<span><span style="color:#CCCCCC">            s0 </span><span style="color:#D4D4D4">=</span><span style="color:#DCDCAA"> rotr</span><span style="color:#CCCCCC">(s0, </span><span style="color:#B5CEA8">7</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">^</span><span style="color:#DCDCAA"> rotr</span><span style="color:#CCCCCC">(s0, </span><span style="color:#B5CEA8">18</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">^</span><span style="color:#CCCCCC"> (s0 </span><span style="color:#D4D4D4">>></span><span style="color:#B5CEA8"> 3</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#CCCCCC">            s1 </span><span style="color:#D4D4D4">=</span><span style="color:#DCDCAA"> rotr</span><span style="color:#CCCCCC">(s1, </span><span style="color:#B5CEA8">17</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">^</span><span style="color:#DCDCAA"> rotr</span><span style="color:#CCCCCC">(s1, </span><span style="color:#B5CEA8">19</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">^</span><span style="color:#CCCCCC"> (s1 </span><span style="color:#D4D4D4">>></span><span style="color:#B5CEA8"> 10</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#9CDCFE">            words</span><span style="color:#CCCCCC">[j </span><span style="color:#D4D4D4">+</span><span style="color:#B5CEA8"> 16</span><span style="color:#CCCCCC">] </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> s0 </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> s1 </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> s2 </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> s3;</span></span>
+<span><span style="color:#CCCCCC">        }</span></span>
+<span><span style="color:#C586C0">        for</span><span style="color:#CCCCCC"> (j </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">; j </span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#B5CEA8"> 64</span><span style="color:#CCCCCC">; </span><span style="color:#D4D4D4">++</span><span style="color:#CCCCCC">j)</span></span>
+<span><span style="color:#CCCCCC">        {</span></span>
+<span><span style="color:#569CD6">            uint32_t</span><span style="color:#CCCCCC"> w </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> words</span><span style="color:#CCCCCC">[j];</span></span>
+<span><span style="color:#569CD6">            uint32_t</span><span style="color:#CCCCCC"> k </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> ks</span><span style="color:#CCCCCC">[j];</span></span>
+<span><span style="color:#569CD6">            uint32_t</span><span style="color:#CCCCCC"> s0 </span><span style="color:#D4D4D4">=</span><span style="color:#DCDCAA"> rotr</span><span style="color:#CCCCCC">(a, </span><span style="color:#B5CEA8">2</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">^</span><span style="color:#DCDCAA"> rotr</span><span style="color:#CCCCCC">(a, </span><span style="color:#B5CEA8">13</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">^</span><span style="color:#DCDCAA"> rotr</span><span style="color:#CCCCCC">(a, </span><span style="color:#B5CEA8">22</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#569CD6">            uint32_t</span><span style="color:#CCCCCC"> m </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> (a </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> b) </span><span style="color:#D4D4D4">^</span><span style="color:#CCCCCC"> (a </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> c) </span><span style="color:#D4D4D4">^</span><span style="color:#CCCCCC"> (b </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> c);</span></span>
+<span><span style="color:#569CD6">            uint32_t</span><span style="color:#CCCCCC"> t2 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> s0 </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> m;</span></span>
+<span><span style="color:#569CD6">            uint32_t</span><span style="color:#CCCCCC"> s1 </span><span style="color:#D4D4D4">=</span><span style="color:#DCDCAA"> rotr</span><span style="color:#CCCCCC">(e, </span><span style="color:#B5CEA8">6</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">^</span><span style="color:#DCDCAA"> rotr</span><span style="color:#CCCCCC">(e, </span><span style="color:#B5CEA8">11</span><span style="color:#CCCCCC">) </span><span style="color:#D4D4D4">^</span><span style="color:#DCDCAA"> rotr</span><span style="color:#CCCCCC">(e, </span><span style="color:#B5CEA8">25</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#569CD6">            uint32_t</span><span style="color:#CCCCCC"> ch </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> (e </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> f) </span><span style="color:#D4D4D4">^</span><span style="color:#CCCCCC"> (</span><span style="color:#D4D4D4">~</span><span style="color:#CCCCCC">e </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> g);</span></span>
+<span><span style="color:#569CD6">            uint32_t</span><span style="color:#CCCCCC"> t1 </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> h </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> s1 </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> ch </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> k </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> w;</span></span>
+<span><span style="color:#CCCCCC">            </span></span>
+<span><span style="color:#CCCCCC">            h </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> t1 </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> t2;</span></span>
+<span><span style="color:#CCCCCC">            d </span><span style="color:#D4D4D4">+=</span><span style="color:#CCCCCC"> t1;</span></span>
+<span><span style="color:#569CD6">            uint32_t</span><span style="color:#CCCCCC"> x </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> h;</span></span>
+<span><span style="color:#CCCCCC">            h </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> g;</span></span>
+<span><span style="color:#CCCCCC">            g </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> f;</span></span>
+<span><span style="color:#CCCCCC">            f </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> e;</span></span>
+<span><span style="color:#CCCCCC">            e </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> d;</span></span>
+<span><span style="color:#CCCCCC">            d </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> c;</span></span>
+<span><span style="color:#CCCCCC">            c </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> b;</span></span>
+<span><span style="color:#CCCCCC">            b </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a;</span></span>
+<span><span style="color:#CCCCCC">            a </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> x;</span></span>
+<span><span style="color:#CCCCCC">        }</span></span>
+<span><span style="color:#C586C0">        for</span><span style="color:#CCCCCC"> (j </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">; j </span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#B5CEA8"> 8</span><span style="color:#CCCCCC">; </span><span style="color:#D4D4D4">++</span><span style="color:#CCCCCC">j)</span></span>
+<span><span style="color:#CCCCCC">        {</span></span>
+<span><span style="color:#9CDCFE">            hash</span><span style="color:#CCCCCC">[j] </span><span style="color:#D4D4D4">+=</span><span style="color:#9CDCFE"> init</span><span style="color:#CCCCCC">[j];</span></span>
+<span><span style="color:#9CDCFE">            init</span><span style="color:#CCCCCC">[j] </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> hash</span><span style="color:#CCCCCC">[j];</span></span>
+<span><span style="color:#CCCCCC">        }</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#4EC9B0">    std</span><span style="color:#CCCCCC">::vector</span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#569CD6">uint8_t</span><span style="color:#D4D4D4">></span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#C586C0">    for</span><span style="color:#CCCCCC"> (</span><span style="color:#569CD6">uint64_t</span><span style="color:#CCCCCC"> i </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">; i </span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#B5CEA8"> 8</span><span style="color:#CCCCCC">; i</span><span style="color:#D4D4D4">++</span><span style="color:#CCCCCC">)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#9CDCFE">        result</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">push_back</span><span style="color:#CCCCCC">(</span><span style="color:#9CDCFE">hash</span><span style="color:#CCCCCC">[i] </span><span style="color:#D4D4D4">>></span><span style="color:#B5CEA8"> 24</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#9CDCFE">        result</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">push_back</span><span style="color:#CCCCCC">(</span><span style="color:#9CDCFE">hash</span><span style="color:#CCCCCC">[i] </span><span style="color:#D4D4D4">>></span><span style="color:#B5CEA8"> 16</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#9CDCFE">        result</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">push_back</span><span style="color:#CCCCCC">(</span><span style="color:#9CDCFE">hash</span><span style="color:#CCCCCC">[i] </span><span style="color:#D4D4D4">>></span><span style="color:#B5CEA8"> 8</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#9CDCFE">        result</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">push_back</span><span style="color:#CCCCCC">(</span><span style="color:#9CDCFE">hash</span><span style="color:#CCCCCC">[i]);</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#C586C0">    return</span><span style="color:#CCCCCC"> result;</span></span>
+<span><span style="color:#CCCCCC">}</span></span>
+<span><span style="color:#569CD6">int</span><span style="color:#DCDCAA"> main</span><span style="color:#CCCCCC">()</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#6A9955">    //hello world</span></span>
+<span><span style="color:#4EC9B0">    std</span><span style="color:#CCCCCC">::vector</span><span style="color:#D4D4D4">&#x3C;</span><span style="color:#569CD6">uint8_t</span><span style="color:#D4D4D4">></span><span style="color:#CCCCCC"> data </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> { </span><span style="color:#B5CEA8">0x68</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x65</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x6c</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x6c</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x6f</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x20</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x77</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x6f</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x72</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x6c</span><span style="color:#CCCCCC">,</span><span style="color:#B5CEA8">0x64</span><span style="color:#CCCCCC"> };</span></span>
+<span><span style="color:#569CD6">    auto</span><span style="color:#CCCCCC"> result </span><span style="color:#D4D4D4">=</span><span style="color:#DCDCAA"> sha2_256</span><span style="color:#CCCCCC">(data);</span></span>
+<span><span style="color:#C586C0">    for</span><span style="color:#CCCCCC"> (</span><span style="color:#569CD6">auto</span><span style="color:#CCCCCC"> b : result)</span></span>
+<span><span style="color:#CCCCCC">    {</span></span>
+<span><span style="color:#4EC9B0">        std</span><span style="color:#CCCCCC">::cout </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::</span><span style="color:#DCDCAA">format</span><span style="color:#CCCCCC">(</span><span style="color:#CE9178">"{:02X}"</span><span style="color:#CCCCCC">, b);</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#6A9955">    //B94D27B9934D3E08A52E52D7DA7DABFAC484EFE37A5380EE9088F7ACE2EFCDE9</span></span>
+<span><span style="color:#CCCCCC">}</span></span></code></pre>
+            </code-opinion>
+        </code-area>
+        <div class="paragraph">
+            其余的配置只有初值，字长，轮次，和输出位数不同，读者可以尝试自行编写
+        </div>
+        <h3>其他常见库的实现</h3>
+        <div class="paragraph">
+            <a href="https://github.com/openssl/openssl/blob/master/crypto/sha/sha256.c">OpenSSL</a>C
+        </div>
+        <div class="paragraph">
+            <a href="https://github.com/weidai11/cryptopp/blob/master/sha.cpp">Crypto++</a>C++
+        </div>
+        <h2>参考</h2>
+        <div class="paragraph">
+            <a href="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf">NIST SHA2的文档</a>
+        </div>
+    </div>
+    <script src="js/component.js"></script>
+    <script src="js/SHA2.js"></script>
+</body>
+</html>
