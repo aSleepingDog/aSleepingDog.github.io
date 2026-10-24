@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-en">
+<head>
+    <meta charset="UTF-8">
+    <title>Windows系统GCC-Mingw编译（零）</title>
+    <link href="css/cppWinMingwCompile_dark.css" rel="stylesheet">
+    <link href="css/component_dark.css" rel="stylesheet">
+</head>
+<body>
+    <div id="head_menu">
+        <div class="head_opinion" onclick="window.location.href='home.html';">
+            <img src="assets/icon.png" id="head_icon_img">
+        </div>
+        <div class="head_opinion" style="margin-right: auto;border-right: #4b4e53 1px solid;" onclick="window.location.href='list.html';">
+            <img src="assets/list_dark.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/sun.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/translate_dark.svg">
+        </div>
+        <div class="head_opinion" id="github_opinion" onclick="window.location.href='https://github.com/aSleepingDog'">
+            <img src="assets/github.svg">
+        </div>
+    </div>
+    <index-area id="index" for="main_context"></index-area>
+    <div id="main_context">
+        <h1>C++——Windows系统GCC-Mingw编译（零）</h1>
+        <div class="meta">
+            上次更新:2026-10-21
+        </div>
+        <div class="paragraph">
+            在安装完Mingw下的GCC编译器后，要完成第一次编译，这样能判断安装编译器是否正常工作，跑通第一个编译流程
+        </div>
+        <h2>设置环境变量</h2>
+        <div class="paragraph">
+            Windows系统提供了环境变量，作为程序运行时的查找的依赖和需要使用的变量。使用GCC开发程序时，需要加载一些内置的动态链接库。所以需要把必要的环境添加到环境变量中
+        </div>
+        <div class="paragraph">
+            复制编译器所在目录路径（末尾通常是bin）（有很多方式复制目录路径，如果此方案不可行，可以查询其他方案）
+        </div>
+        <img src="assets/cppWinMingwCompile/img000.png" alt="" class="default">
+        <div class="paragraph">
+            在开始菜单中搜索“环境变量”（有很多方式打开”环境变量“窗口，如果此方案不可行，可以查询其他方案）
+        </div>
+        <img src="assets/cppWinMingwCompile/img001.png" alt="" class="default">
+        <div class="paragraph">
+            按顺序依次单击打开，并粘贴目录，依次单击确认
+        </div>
+        <img src="assets/cppWinMingwCompile/img002.png" alt="" class="default">
+        <div class="paragraph">
+            在开始菜单中搜索“cmd”并单击打开
+        </div>
+        <img src="assets/cppWinMingwCompile/img003.png" alt="" class="default">
+        <div class="paragraph">
+            输入下列命令（如果你的cmd窗口整体看下来比较平滑和图片不太一致，这是正常的。示例中的windows是精简过的版本，所以cmd比较过时。但是这不影响结果）
+        </div>
+        <code-area>
+            <code-opinion language="cmd">
+                <pre><code>g++.exe --version</code></pre>
+            </code-opinion>
+        </code-area>
+        <div class="paragraph">
+            如果输出信息，则环境变量设置完成（具体信息可以因为来源而不固定，示例使用的是MSYS2提供的工具链）
+        </div>
+        <img src="assets/cppWinMingwCompile/img004.png" alt="" class="default">
+        <h2>手动编译</h2>
+        <div class="paragraph">
+            接下来的步骤将完成一次手动编译过程，测试编译器的可用性
+        </div>
+        <div class="paragraph">
+            在一个目录下新建文本文档（在空白处右键然后依次点击）
+        </div>
+        <img src="assets/cppWinMingwCompile/img005.png" alt="" class="default">
+        <div class="paragraph">
+            在第二排菜单栏（新建，一堆按钮，排序，查看）选择查看-显示-勾选文件扩展名。否则无法进行下方的重命名操作
+        </div>
+        <div class="paragraph">
+            右键将其重命名为 <span class="inline_code">test.cpp</span>，并忽略系统的警告（如果系统没有警告则上一步勾选文件扩展名的操作没有设置成功）
+        </div>
+        <img src="assets/cppWinMingwCompile/img006.png" alt="" class="default">
+        <div class="paragraph">
+            右键选择使用记事本打开
+        </div>
+        <img src="assets/cppWinMingwCompile/img007.png" alt="" class="default">
+        <div class="paragraph">
+            将下列代码复制粘贴到记事本（代码的细微差别不影响结果，直接选择复制即可）
+        </div>
+        <div class="paragraph">
+            并保存（可以同时按下Ctrl+S保存，也可以选择文件-保存的操作来保存）
+        </div>
+        <code-area>
+            <code-opinion language="C++">
+<pre style="white-space:pre-wrap;word-wrap:break-word;background-color:#1F1F1F;color:#CCCCCC"><code><span><span style="color:#C586C0">#include</span><span style="color:#CE9178"> &#x3C;iostream></span></span>
+<span><span style="color:#C586C0">#include</span><span style="color:#CE9178"> &#x3C;string></span></span>
+<span><span style="color:#569CD6">int</span><span style="color:#DCDCAA"> main</span><span style="color:#CCCCCC">()</span></span>
+<span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#4EC9B0">    std</span><span style="color:#CCCCCC">::string a;</span></span>                               //声明字符串变量a
+<span><span style="color:#4EC9B0">    std</span><span style="color:#CCCCCC">::cout </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#CE9178"> "hello world"</span><span style="color:#D4D4D4"> &#x3C;&#x3C;</span><span style="color:#4EC9B0"> std</span><span style="color:#CCCCCC">::endl;</span></span>     //输出字符串
+<span><span style="color:#4EC9B0">    std</span><span style="color:#CCCCCC">::cin </span><span style="color:#D4D4D4">>></span><span style="color:#CCCCCC"> a;</span></span>                               //输入非空字符串
+<span><span style="color:#C586C0">    return</span><span style="color:#B5CEA8"> 0</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#CCCCCC">}</span></span></code></pre>
+            </code-opinion>
+        </code-area>
+        <img src="assets/cppWinMingwCompile/img008.png" alt="" class="default">
+        <div class="paragraph">
+            如果选择先粘贴代码，再重命名也可以，不影响结果
+        </div>
+        <div class="paragraph">
+            在此目录的路径栏处输入cmd（确保此目录下没有叫做cmd的文件，文件夹或目录）呼出cmd窗口
+        </div>
+        <img src="assets/cppWinMingwCompile/img009.png" alt="" class="default">
+        <div class="paragraph">
+            依次输入下列命令（中间应该没有任何报错，无论是输出还是弹窗）
+        </div>
+        <code-area>
+            <code-opinion language="cmd">
+                <pre>
+<code>g++.exe test.cpp -o test.exe
+test.exe</code></pre>
+            </code-opinion>
+        </code-area>
+        <img src="assets/cppWinMingwCompile/img010.png" alt="" class="default">
+        <div class="paragraph">
+            如果显示出<span class="inline_code">hello world</span>，则继续输入任意字符并按下enter继续程序（或者同时按下Ctrl+C退出）
+        </div>
+        <div class="paragraph">
+            在上述输入命令，显示字符和输入字符（直接退出也行）的过程中，如果没有输出额外信息或弹窗，则说明GCC编译器已经能够正常使用了。
+        </div>
+    </div>
+    <script src="js/component.js"></script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-en">
+<head>
+    <meta charset="UTF-8">
+    <title>C++简介</title>
+    <link href="css/cppIntroduction_dark.css" rel="stylesheet">
+    <link href="css/component_dark.css" rel="stylesheet">
+</head>
+<body>
+    <div id="head_menu">
+        <div class="head_opinion" onclick="window.location.href='home.html';">
+            <img src="assets/icon.png" id="head_icon_img">
+        </div>
+        <div class="head_opinion" style="margin-right: auto;border-right: #4b4e53 1px solid;" onclick="window.location.href='list.html';">
+            <img src="assets/list_dark.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/sun.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/translate_dark.svg">
+        </div>
+        <div class="head_opinion" id="github_opinion" onclick="window.location.href='https://github.com/aSleepingDog'">
+            <img src="assets/github.svg">
+        </div>
+    </div>
+    <index-area id="index" for="main_context"></index-area>
+    <div id="main_context">
+        <h1>C++——1、介绍</h1>
+        <div class="meta">
+            上次更新:2026-10-15
+        </div>
+        <div class="paragraph">
+            C++是Bjarne Stroustrup于1979年在贝尔实验室设计开发的高级编程语言，是基于C语言的一种改进。在C语言的基础上增加的更多的功能。
+        </div>
+        <h2>委员会</h2>
+        <div class="paragraph">
+            在后续发展中，C++的标准交由ANSI制定。后来随着国际合作，后又交由ISO管理，并成立委员会。后续的标准由委员会成员参与制定并发布。该项目的官网是<a href="https://isocpp.org/">这里</a>
+        </div>
+        <h2>标准</h2>
+        <div class="paragraph">
+            C++的标准发展有两个很明显的分界，ISO在1998年发布了第一个标准C++98。之后很久没有再次大量更新。
+        </div>
+        <div class="paragraph">
+            直到2011年,为了适应更为先进的编程思想，ISO发布了C++11标准，并且计划每3年对标准进行一次更新，从C++11开始的C++也被称为现代C++（本人不推荐这样笼统地称呼）
+        </div>
+        <div class="paragraph">
+            后续也发布了C++14，C++17，C++20，C++23和今年的C++26，大大扩展了C++的功能，使其能满足复杂软件工程的需要。
+        </div>
+        <div class="paragraph">
+            标准的具体内容由ISO发布，可以点击<a href="https://www.iso.org/search.html?PROD_isoorg_en%5Bquery%5D=Programming%20languages%20%E2%80%94%20C%20%20&PROD_isoorg_en%5Bmenu%5D%5Bfacet%5D=standard">这里</a>查看，但是ISO的标准文件需要花钱购买，一般会选择<a href="https://zh.cppreference.com/w/%E9%A6%96%E9%A1%B5">cppreference</a>网站查询具体的使用方法。
+        </div>
+        <h2>编译器</h2>
+        <div class="paragraph">
+            C++标准只规定了输入输出的表现和部分的实现要求，具体的实现主要由各自的编译器组织实现。基于不同的后端，目前有GCC，MSVC和LLVM/clang三大编译器，这些编译器基本都实现了上一版标准的功能，并且根据实际环境实现了扩展的功能。除了MSVC是Windows系统独享之外，其余两个一定程度地跨平台。
+        </div>
+        <div class="paragraph">
+            C++的跨平台，主要是编译器层级的跨平台。表现就是一份符合标准的C++代码源文件，在不同的编译器上都能编译，实现相同的功能（但是细节可能存在区别）
+        </div>
+        <h2>抽象层级</h2>
+        <div class="paragraph">
+            C++相比C的两个+号，在我的理解上有两个层面：新的抽象理念和标准模板库。这些功能都帮助开发人员开发更加复杂的程序。
+        </div>
+        <h3>抽象理念</h3>
+        <div class="paragraph">
+            相比C，C++从一开始就引入了oop思想，来封装更复杂的功能和逻辑。后续由加入了线程模型，RAII，RTTI，模板，编译期计算等等。
+        </div>
+        <h3>标准模板库</h3>
+        <div class="paragraph">
+            得益于新的理念，C++的标准模板库能提供更多的功能，比如容器，迭代器，智能指针，算法，文件系统，线程，异步等功能
+        </div>
+    </div>
+
+    <script src="js/component.js"></script>
+</body>
+</html>

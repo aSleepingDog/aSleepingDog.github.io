@@ -518,3 +518,72 @@ class BinaryInput extends HTMLElement{
     }
 }
 customElements.define('binary-input', BinaryInput);
+
+document.querySelectorAll("img.default").forEach((img)=>{
+    img.addEventListener("click", (e)=>{
+        let dialog = document.querySelector(`body dialog[type="img"]`);
+        if(!dialog){
+            dialog = document.createElement("dialog");
+            dialog.setAttribute("type", "img");
+            document.querySelector("body").appendChild(dialog);
+            dialog.addEventListener("dblclick", (e)=>{
+                let target = e.target;
+                while(target.tagName.toLowerCase()!=="dialog"){
+                    target = target.parentNode;
+                }
+                while(target.firstChild){
+                    target.firstChild.remove();
+                }
+                target.close();
+            })
+            dialog.addEventListener("wheel", (e)=>{
+                e.preventDefault()
+            })
+        }
+        let div = document.createElement("div");
+        div.className = "img_player";
+        let childImg = document.createElement("img");
+        childImg.src = img.src;
+        childImg.className = "default";
+        childImg.scale = 1
+        childImg.translateX = 0;
+        childImg.translateY = 0;
+        childImg.addEventListener("wheel", (e)=>{
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            const newScale = e.target.scale * delta;
+            const scaleRatio = newScale / e.target.scale;
+            e.target.scale = newScale;
+            childImg.style.transform = `translate(${e.target.translateX}px, ${e.target.translateY}px) scale(${e.target.scale})`;
+        })
+        childImg.addEventListener("mousedown", (e)=>{
+            e.preventDefault()
+            if(childImg.moving) return;
+            childImg.moving = true;
+            childImg.startX = e.clientX - childImg.translateX;
+            childImg.startY = e.clientY - childImg.translateY;
+        })
+        childImg.addEventListener("mousemove", (e)=>{
+            if(!childImg.moving) return;
+            e.preventDefault()
+            childImg.translateX = e.clientX - childImg.startX;
+            childImg.translateY = e.clientY - childImg.startY;
+            childImg.style.transform = `translate(${e.target.translateX}px, ${e.target.translateY}px) scale(${e.target.scale})`;
+        })
+        childImg.addEventListener("mouseup", (e)=>{
+            e.preventDefault()
+            if(!childImg.moving) return;
+            childImg.translateX = e.clientX - childImg.startX;
+            childImg.translateY = e.clientY - childImg.startY;
+            childImg.style.transform = `translate(${e.target.translateX}px, ${e.target.translateY}px) scale(${e.target.scale})`;
+            childImg.moving = false;
+        })
+        div.appendChild(childImg);
+        dialog.appendChild(div);
+        dialog.showModal();
+        let notice = document.createElement("div");
+        notice.textContent = "上下滚动放缩 拖拽移动 双击退出";
+        notice.className = "notice";
+        dialog.appendChild(notice);
+    })
+})

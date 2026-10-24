@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-en">
+<head>
+    <meta charset="UTF-8">
+    <title>Windows系统GCC-Mingw安装</title>
+    <link href="css/cppWinMingwInstall_dark.css" rel="stylesheet">
+    <link href="css/component_dark.css" rel="stylesheet">
+</head>
+<body>
+    <div id="head_menu">
+        <div class="head_opinion" onclick="window.location.href='home.html';">
+            <img src="assets/icon.png" id="head_icon_img">
+        </div>
+        <div class="head_opinion" style="margin-right: auto;border-right: #4b4e53 1px solid;" onclick="window.location.href='list.html';">
+            <img src="assets/list_dark.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/sun.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/translate_dark.svg">
+        </div>
+        <div class="head_opinion" id="github_opinion" onclick="window.location.href='https://github.com/aSleepingDog'">
+            <img src="assets/github.svg">
+        </div>
+    </div>
+    <index-area id="index" for="main_context"></index-area>
+    <div id="main_context">
+        <h1>C++——Windows系统GCC-Mingw安装</h1>
+        <div class="meta">
+            上次更新:2026-10-23
+        </div>
+        <div class="paragraph">
+            GCC是GUN主持下的开发的开发环境套件（GUN Compiler Collection GUN编译器套件），一般用于Linux C/C++程序开发。本体并不支持Windows
+        </div>
+        <div class="paragraph">
+            不过Mingw（Mini GCC in Windows，<a href="https://www.mingw-w64.org/">官网</a>）项目做好了标准库和win32 API的适配工作，让熟悉GCC的用户可以在Windows上使用GCC进行C/C++开发Windows程序。目前Mingw-64w承接Mingw衣钵，也不再局限于Windows和GCC。
+        </div>
+        <div class="paragraph">
+            本文接下来以两种方式配置基于Windows11的Mingw-w64下的GCC编译器
+        </div>
+        <h2>仅GCC</h2>
+        <div class="paragraph">
+            仅下载GCC是较为简单直接的安装方式，缺点是如果依赖库有更新，则需要自行下载新版本更新
+        </div>
+        <h3>直接下载</h3>
+        <div class="paragraph">
+            点击<a href="https://github.com/niXman/mingw-builds-binaries/releases">此处</a>进入下载链接，选择版本后（可以追最新版），下拉Assets。
+        </div>
+        <img src="assets/cppWinMingwInstall/img000.png" class="default"/>
+        <div class="paragraph">
+            选择x86-64-[版本号]-release-win32-seh-ucrt-rt_v14-[预发布版本号].7z，（x86-64-[版本号]-release-posix-seh-ucrt-rt_v14-[预发布版本号].7z在发布时线程相关功能的程序时需要额外链接动态链接库，需要斟酌是否需要在Windows上学习或使用posix）
+        </div>
+        <div class="paragraph">
+            下载并选择某个路径解压后进入（路径都是由可见的ASCII字符组成的合法路径）
+        </div>
+        <img src="assets/cppWinMingwInstall/img001.png" class="default"/>
+        <div class="paragraph">
+            编译器本体是./mingw64/bin/g++.exe
+        </div>
+        <img src="assets/cppWinMingwInstall/img002.png" class="default"/>
+        <h3>GUI下载</h3>
+        <div class="paragraph">
+            从<a href="https://github.com/Vuniverse0/mingwInstaller/releases/download/1.2.1/mingwInstaller.exe">此处</a>（<a href="https://github.com/niXman/mingw-builds-binaries">源码</a>）下载GUI界面。
+        </div>
+        <img src="assets/cppWinMingwInstall/img003.png" class="default"/>
+        <div class="paragraph">
+            下载后双击运行，选择next
+        </div>
+        <img src="assets/cppWinMingwInstall/img004.png" class="default"/>
+        <div class="paragraph">
+            选择需要下载的版本（可以追最新版）
+        </div>
+        <img src="assets/cppWinMingwInstall/img005.png" class="default"/>
+        <div class="paragraph">
+            选择需要的架构（优先64bit，如有开发32bit的需求再选择）
+        </div>
+        <img src="assets/cppWinMingwInstall/img006.png" class="default"/>
+        <div class="paragraph">
+            选择需要线程模型（优先win32，posix按需选择）
+        </div>
+        <img src="assets/cppWinMingwInstall/img007.png" class="default"/>
+        <div class="paragraph">
+            选择修订版本
+        </div>
+        <img src="assets/cppWinMingwInstall/img008.png" class="default"/>
+        <div class="paragraph">
+            选择C运行时（选择UCRT）
+        </div>
+        <img src="assets/cppWinMingwInstall/img009.png" class="default"/>
+        <div class="paragraph">
+            选择安装路径，下方的勾选是在桌面创建一个直接定位到下载mingw的路径的cmd脚本
+        </div>
+        <img src="assets/cppWinMingwInstall/img010.png" class="default"/>
+        <div class="paragraph">
+            等待下载，下载的文件会存储在%TEMP%目录（C:\Users\当前用户名\AppData\Local\Temp）下，和直接下载的文件名类似
+        </div>
+        <img src="assets/cppWinMingwInstall/img011.png" class="default"/>
+        <div class="paragraph">
+            下载完成后等待解压和移动文件，
+        </div>
+        <img src="assets/cppWinMingwInstall/img012.png" class="default"/>
+        <div class="paragraph">
+            到此点击finish结束
+        </div>
+        <img src="assets/cppWinMingwInstall/img013.png" class="default"/>
+        <div class="paragraph">
+            此处的mingw即为工具包根路径
+        </div>
+        <img src="assets/cppWinMingwInstall/img014.png" class="default"/>
+        <div class="paragraph">
+            编译器本体同样是./mingw64/bin/g++.exe
+        </div>
+        <h2>MSYS2</h2>
+        <div class="paragraph">
+            MSYS2（min system v2），引入Arch linux的包管理器（pacman），可以使用类似linux的的方式来安装和更新GCC编译器和附属库
+        </div>
+        <div class="paragraph">
+            不过Arch linux使用的用户不多，所以pacman的使用可能需要额外学习（不过后续可以绕过pacman进行第三方库的管理，pacman仅用于更新GCC）
+        </div>
+        <div class="paragraph">
+            进入<a href="https://www.msys2.org/">官网</a>，选择合适的架构进行下载（一般选择x86_64，不确定的话在打开设置-系统-关于-设备规格-系统类型处查看，如果是x64的选x86_64.arm64的选择arm）
+        </div>
+        <div class="paragraph">
+            官网上也有一步步下载的教程，可以移步查看，这里的内容和官网略有区别
+        </div>
+        <img src="assets/cppWinMingwInstall/img015.png" class="default"/>
+        <div class="paragraph">
+            下载完成后，双击打开。选择next继续
+        </div>
+        <img src="assets/cppWinMingwInstall/img016.png" class="default"/>
+        <div class="paragraph">
+            选择安装的位置。选择next继续
+        </div>
+        <img src="assets/cppWinMingwInstall/img017.png" class="default"/>
+        <div class="paragraph">
+            输入在开始菜单中展示的文件夹（主要是各类终端/命令行的快捷方式）
+        </div>
+        <img src="assets/cppWinMingwInstall/img018.png" class="default"/>
+        <div class="paragraph">
+            等待下载安装，其中有某些步骤的时间较长
+        </div>
+        <img src="assets/cppWinMingwInstall/img019.png" class="default"/>
+        <div class="paragraph">
+            这里是参考的日志内容
+        </div>
+        <code-area>
+            <code-opinion language="cmd">
+                <pre><code>
+Preparing the installation...
+
+Preparing to unpack components...
+
+Unpacking components...
+Extracting "20260927msys64.7z"
+Done
+
+Installing component MSYS2
+Copying skeleton files.
+These files are for the users to personalise their msys2 experience.
+
+They will never be overwritten nor automatically updated.
+
+
+'./.bashrc' -> '/home/test/.bashrc'
+
+'./.bash_profile' -> '/home/test/.bash_profile'
+
+'./.profile' -> '/home/test/.profile'
+
+'C:\WINDOWS\system32\drivers\etc\hosts' -> '/etc/hosts'
+
+'C:\WINDOWS\system32\drivers\etc\protocol' -> '/etc/protocols'
+
+'C:\WINDOWS\system32\drivers\etc\services' -> '/etc/services'
+
+'C:\WINDOWS\system32\drivers\etc\networks' -> '/etc/networks'
+
+==> Generating pacman master key. This may take some time.//这里可能比较耗时
+
+==> Updating trust database...
+
+==> Appending keys from msys2.gpg...
+
+==> Locally signing trusted keys in keyring...
+
+  -> Locally signed 5 keys.
+
+==> Importing owner trust values...
+
+==> Disabling revoked keys in keyring...
+
+  -> Disabled 4 keys.
+
+==> Updating trust database...
+
+Done
+Writing maintenance tool.
+
+Installation finished!
+                </code></pre>
+            </code-opinion>
+        </code-area>
+        <div class="paragraph">
+            完成之后的界面，之后选择next
+        </div>
+        <img src="assets/cppWinMingwInstall/img020.png" class="default"/>
+        <div class="paragraph">
+            安装完成后的界面，路径是你选择安装的根路径（选择run会打开合适的终端），本文后续会告诉你终端在哪里
+        </div>
+        <img src="assets/cppWinMingwInstall/img021.png" class="default"/>
+        <div class="paragraph">
+            打开根目录，选择ucrt.exe
+        </div>
+        <img src="assets/cppWinMingwInstall/img022.png" class="default"/>
+        <div class="paragraph">
+            双击打开，复制下列命令后enter执行（此类终端不可以用Ctrl+V复制，可以鼠标右键选择Paste，或者Ctrl+insert，后者不太好按）
+        </div>
+        <code-area>
+            <code-opinion language="cmd">
+                <pre><code>pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain</code></pre>
+            </code-opinion>
+        </code-area>
+        <div class="paragraph">
+            官网的命令（<span class="inline_code">pacman -S mingw-w64-ucrt-x86_64-gcc</span>）仅会下载编译器，但是后续的学习开发过程中，调试器（gdb）也是非常重要的，所以这里也要下载安装
+        </div>
+        <code-area>
+            <code-opinion language="cmd">
+                <pre><code><span>test@ASUS UCRT64 ~</span>
+<span>$ pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain</span>
+<span>:: There are 12 members in group mingw-w64-ucrt-x86_64-toolchain:</span>
+<span>:: Repository ucrt64</span>
+<span>   1) mingw-w64-ucrt-x86_64-binutils  2) mingw-w64-ucrt-x86_64-crt  3) mingw-w64-ucrt-x86_64-gcc  4) mingw-w64-ucrt-x86_64-gdb  5) mingw-w64-ucrt-x86_64-gdb-multiarch  6) mingw-w64-ucrt-x86_64-headers  7) mingw-w64-ucrt-x86_64-libgomp</span>
+<span>   8) mingw-w64-ucrt-x86_64-libstdc++  9) mingw-w64-ucrt-x86_64-libwinpthread  10) mingw-w64-ucrt-x86_64-make  11) mingw-w64-ucrt-x86_64-pkgconf  12) mingw-w64-ucrt-x86_64-winpthreads</span>
+<span></span>
+<span>Enter a selection (default=all): //这里直接enter继续</span>
+<span>resolving dependencies...</span>
+<span>looking for conflicting packages...</span>
+<span></span>
+<span>Packages (52) binutils-2.47-1  bison-3.8.2-5  diffutils-3.12-1  dos2unix-7.5.7-1  flex-2.6.4-4  m4-1.4.21-1  make-4.4.1-3  mingw-w64-ucrt-x86_64-bzip2-1.0.8-4  mingw-w64-ucrt-x86_64-cc-libs-16.2.0-6  mingw-w64-ucrt-x86_64-expat-2.9.0-1</span>
+<span>              mingw-w64-ucrt-x86_64-gettext-runtime-1.0-1  mingw-w64-ucrt-x86_64-gmp-6.3.0-2  mingw-w64-ucrt-x86_64-isl-0.28-1  mingw-w64-ucrt-x86_64-libb2-0.98.1-3  mingw-w64-ucrt-x86_64-libffi-3.8.0-1  mingw-w64-ucrt-x86_64-libgcc-16.2.0-6</span>
+<span>              mingw-w64-ucrt-x86_64-libiconv-1.19-1  mingw-w64-ucrt-x86_64-libsystre-1.0.2-3  mingw-w64-ucrt-x86_64-libtre-0.9.0-2  mingw-w64-ucrt-x86_64-mpc-1.4.1-1  mingw-w64-ucrt-x86_64-mpdecimal-4.0.1-3</span>
+<span>              mingw-w64-ucrt-x86_64-mpfr-4.2.2-3  mingw-w64-ucrt-x86_64-ncurses-6.6-4  mingw-w64-ucrt-x86_64-openssl-3.6.5-1  mingw-w64-ucrt-x86_64-pcre2-10.49-1  mingw-w64-ucrt-x86_64-python-3.14.8-1</span>
+<span>              mingw-w64-ucrt-x86_64-readline-8.3.003-1  mingw-w64-ucrt-x86_64-sqlite3-3.54.0-1  mingw-w64-ucrt-x86_64-tcl-8.6.18-1  mingw-w64-ucrt-x86_64-termcap-1.3.1-8  mingw-w64-ucrt-x86_64-tk-8.6.18-1</span>
+<span>              mingw-w64-ucrt-x86_64-tzdata-2026e-1  mingw-w64-ucrt-x86_64-windows-default-manifest-20260815-1  mingw-w64-ucrt-x86_64-wineditline-2.208-1  mingw-w64-ucrt-x86_64-xxhash-0.8.4-1  mingw-w64-ucrt-x86_64-xz-5.8.4-1</span>
+<span>              mingw-w64-ucrt-x86_64-zlib-1.3.2-2  mingw-w64-ucrt-x86_64-zstd-1.5.7-2  patch-2.8-2  base-devel-2026.08-3  mingw-w64-ucrt-x86_64-binutils-2.47-4  mingw-w64-ucrt-x86_64-crt-14.0.0.r495.g63ebe6cdb-1</span>
+<span>              mingw-w64-ucrt-x86_64-gcc-16.2.0-6  mingw-w64-ucrt-x86_64-gdb-18.1-3  mingw-w64-ucrt-x86_64-gdb-multiarch-18.1-3  mingw-w64-ucrt-x86_64-headers-14.0.0.r495.g63ebe6cdb-1  mingw-w64-ucrt-x86_64-libgomp-16.2.0-6</span>
+<span>              mingw-w64-ucrt-x86_64-libstdc++-16.2.0-6  mingw-w64-ucrt-x86_64-libwinpthread-14.0.0.r495.g63ebe6cdb-2  mingw-w64-ucrt-x86_64-make-4.4.1-5  mingw-w64-ucrt-x86_64-pkgconf-1~3.0.10-1</span>
+<span>              mingw-w64-ucrt-x86_64-winpthreads-14.0.0.r495.g63ebe6cdb-2</span>
+<span></span>
+<span>Total Download Size:    80.23 MiB</span>
+<span>Total Installed Size:  920.71 MiB</span>
+<span></span>
+<span>:: Proceed with installation? [Y/n] Y //输入y（不分大小写）继续</span>
+<span>:: Retrieving packages...</span>
+<span> mingw-w64-ucrt-x86_64-gdb-multiarch-18.1-3-any                                                                         6.8 MiB   935 KiB/s 00:07 [########################################################################################] 100%</span>
+<span> mingw-w64-ucrt-x86_64-binutils-2.47-4-any                                                                              6.3 MiB   797 KiB/s 00:08 [########################################################################################] 100%</span>
+<span> binutils-2.47-1-x86_64                                                                                                 6.0 MiB   525 KiB/s 00:12 [########################################################################################] 100%</span>
+<span> mingw-w64-ucrt-x86_64-headers-14.0.0.r495.g63ebe6cdb-1-any                                                             6.6 MiB   565 KiB/s 00:12 [########################################################################################] 100%</span>
+<span> mingw-w64-ucrt-x86_64-crt-14.0.0.r495.g63ebe6cdb-1-any                                                                 3.9 MiB   830 KiB/s 00:05 [########################################################################################] 100%</span>
+<span> bison-3.8.2-5-x86_64                                                                                                 777.2 KiB  1076 KiB/s 00:01 [########################################################################################] 100%</span>
+<span> make-4.4.1-3-x86_64                                                                                                  502.6 KiB   589 KiB/s 00:01 [########################################################################################] 100%</span>
+<span> dos2unix-7.5.7-1-x86_64                                                                                              450.2 KiB   651 KiB/s 00:01 [########################################################################################] 100%</span>
+<span> diffutils-3.12-1-x86_64                                                                                              385.3 KiB   586 KiB/s 00:01 [########################################################################################] 100%</span>
+<span> m4-1.4.21-1-x86_64                                                                                                   252.6 KiB   358 KiB/s 00:01 [########################################################################################] 100%</span>
+<span> mingw-w64-ucrt-x86_64-libgomp-16.2.0-6-any                                                                           304.0 KiB   189 KiB/s 00:02 [########################################################################################] 100%</span>
+<span> flex-2.6.4-4-x86_64                                                                                                  303.5 KiB   187 KiB/s 00:02 [########################################################################################] 100%</span>
+<span> mingw-w64-ucrt-x86_64-tzdata-2026e-1-any                                                                             220.6 KiB   403 KiB/s 00:01 [########################################################################################] 100%</span>
+<span> mingw-w64-ucrt-x86_64-pkgconf-1~3.0.10-1-any                                                                         145.7 KiB   203 KiB/s 00:01 [########################################################################################] 100%</span>
+<span> mingw-w64-ucrt-x86_64-make-4.4.1-5-any                                                                               126.1 KiB   247 KiB/s 00:01 [########################################################################################] 100%</span>
+<span> mingw-w64-ucrt-x86_64-libgcc-16.2.0-6-any                                                                             75.4 KiB   154 KiB/s 00:00 [########################################################################################] 100%</span>
+<span> mingw-w64-ucrt-x86_64-winpthreads-14.0.0.r495.g63ebe6cdb-2-any                                                        46.0 KiB  95.0 KiB/s 00:00 [########################################################################################] 100%</span>
+<span> patch-2.8-2-x86_64                                                                                                    88.8 KiB  78.8 KiB/s 00:01 [########################################################################################] 100%</span>
+<span> mingw-w64-ucrt-x86_64-libwinpthread-14.0.0.r495.g63ebe6cdb-2-any                                                      31.3 KiB  70.0 KiB/s 00:00 [########################################################################################] 100%</span>
+<span> mingw-w64-ucrt-x86_64-cc-libs-16.2.0-6-any                                                                             2.3 KiB  4.33 KiB/s 00:01 [########################################################################################] 100%</span>
+<span> base-devel-2026.08-3-any                                                                                            1810.0   B  1860   B/s 00:01 [########################################################################################] 100%</span>
+<span> mingw-w64-ucrt-x86_64-gcc-16.2.0-6-any                                                                                46.3 MiB  1195 KiB/s 00:40 [########################################################################################] 100%</span>
+<span> mingw-w64-ucrt-x86_64-libstdc++-16.2.0-6-any                                                                         777.3 KiB  9.24 KiB/s 01:24 [########################################################################################] 100%</span>
+<span> Total (23/23)                                                                                                         80.2 MiB   880 KiB/s 01:33 [########################################################################################] 100%</span>
+<span>error: failed retrieving file 'mingw-w64-ucrt-x86_64-libstdc++-16.2.0-6-any.pkg.tar.zst' from mirror.msys2.org : The requested URL returned error: 503</span>
+<span>(52/52) checking keys in keyring                                                                                                                  [########################################################################################] 100%</span>
+<span>(52/52) checking package integrity                                                                                                                [########################################################################################] 100%</span>
+<span>(52/52) loading package files                                                                                                                     [########################################################################################] 100%</span>
+<span>(52/52) checking for file conflicts                                                                                                               [########################################################################################] 100%</span>
+<span>(52/52) checking available disk space                                                                                                             [########################################################################################] 100%</span>
+<span>:: Processing package changes...</span>
+<span>( 1/52) installing binutils                                                                                                                       [########################################################################################] 100%</span>
+<span>( 2/52) installing m4                                                                                                                             [########################################################################################] 100%</span>
+<span>( 3/52) installing bison                                                                                                                          [########################################################################################] 100%</span>
+<span>( 4/52) installing diffutils                                                                                                                      [########################################################################################] 100%</span>
+<span>( 5/52) installing dos2unix                                                                                                                       [########################################################################################] 100%</span>
+<span>( 6/52) installing flex                                                                                                                           [########################################################################################] 100%</span>
+<span>( 7/52) installing make                                                                                                                           [########################################################################################] 100%</span>
+<span>( 8/52) installing patch                                                                                                                          [########################################################################################] 100%</span>
+<span>Optional dependencies for patch</span>
+<span>    ed: for patch -e functionality</span>
+<span>( 9/52) installing base-devel                                                                                                                     [########################################################################################] 100%</span>
+<span>(10/52) installing mingw-w64-ucrt-x86_64-libwinpthread                                                                                            [########################################################################################] 100%</span>
+<span>(11/52) installing mingw-w64-ucrt-x86_64-libgcc                                                                                                   [########################################################################################] 100%</span>
+<span>(12/52) installing mingw-w64-ucrt-x86_64-tzdata                                                                                                   [########################################################################################] 100%</span>
+<span>(13/52) installing mingw-w64-ucrt-x86_64-libstdc++                                                                                                [########################################################################################] 100%</span>
+<span>(14/52) installing mingw-w64-ucrt-x86_64-cc-libs                                                                                                  [########################################################################################] 100%</span>
+<span>(15/52) installing mingw-w64-ucrt-x86_64-libiconv                                                                                                 [########################################################################################] 100%</span>
+<span>(16/52) installing mingw-w64-ucrt-x86_64-gettext-runtime                                                                                          [########################################################################################] 100%</span>
+<span>(17/52) installing mingw-w64-ucrt-x86_64-zlib                                                                                                     [########################################################################################] 100%</span>
+<span>(18/52) installing mingw-w64-ucrt-x86_64-zstd                                                                                                     [########################################################################################] 100%</span>
+<span>(19/52) installing mingw-w64-ucrt-x86_64-binutils                                                                                                 [########################################################################################] 100%</span>
+<span>(20/52) installing mingw-w64-ucrt-x86_64-headers                                                                                                  [########################################################################################] 100%</span>
+<span>(21/52) installing mingw-w64-ucrt-x86_64-crt                                                                                                      [########################################################################################] 100%</span>
+<span>(22/52) installing mingw-w64-ucrt-x86_64-gmp                                                                                                      [########################################################################################] 100%</span>
+<span>(23/52) installing mingw-w64-ucrt-x86_64-isl                                                                                                      [########################################################################################] 100%</span>
+<span>(24/52) installing mingw-w64-ucrt-x86_64-mpfr                                                                                                     [########################################################################################] 100%</span>
+<span>(25/52) installing mingw-w64-ucrt-x86_64-mpc                                                                                                      [########################################################################################] 100%</span>
+<span>(26/52) installing mingw-w64-ucrt-x86_64-windows-default-manifest                                                                                 [########################################################################################] 100%</span>
+<span>(27/52) installing mingw-w64-ucrt-x86_64-winpthreads                                                                                              [########################################################################################] 100%</span>
+<span>(28/52) installing mingw-w64-ucrt-x86_64-gcc                                                                                                      [########################################################################################] 100%</span>
+<span>Optional dependencies for mingw-w64-ucrt-x86_64-gcc</span>
+<span>    mingw-w64-ucrt-x86_64-libatomic</span>
+<span>    mingw-w64-ucrt-x86_64-libgomp: OpenMP [pending]</span>
+<span>    mingw-w64-ucrt-x86_64-libquadmath: Quad Math</span>
+<span>(29/52) installing mingw-w64-ucrt-x86_64-expat                                                                                                    [########################################################################################] 100%</span>
+<span>(30/52) installing mingw-w64-ucrt-x86_64-bzip2                                                                                                    [########################################################################################] 100%</span>
+<span>(31/52) installing mingw-w64-ucrt-x86_64-wineditline                                                                                              [########################################################################################] 100%</span>
+<span>(32/52) installing mingw-w64-ucrt-x86_64-pcre2                                                                                                    [########################################################################################] 100%</span>
+<span>(33/52) installing mingw-w64-ucrt-x86_64-libtre                                                                                                   [########################################################################################] 100%</span>
+<span>(34/52) installing mingw-w64-ucrt-x86_64-libsystre                                                                                                [########################################################################################] 100%</span>
+<span>(35/52) installing mingw-w64-ucrt-x86_64-ncurses                                                                                                  [########################################################################################] 100%</span>
+<span>(36/52) installing mingw-w64-ucrt-x86_64-libffi                                                                                                   [########################################################################################] 100%</span>
+<span>(37/52) installing mingw-w64-ucrt-x86_64-mpdecimal                                                                                                [########################################################################################] 100%</span>
+<span>(38/52) installing mingw-w64-ucrt-x86_64-openssl                                                                                                  [########################################################################################] 100%</span>
+<span>Optional dependencies for mingw-w64-ucrt-x86_64-openssl</span>
+<span>    mingw-w64-ucrt-x86_64-ca-certificates</span>
+<span>(39/52) installing mingw-w64-ucrt-x86_64-tcl                                                                                                      [########################################################################################] 100%</span>
+<span>(40/52) installing mingw-w64-ucrt-x86_64-sqlite3                                                                                                  [########################################################################################] 100%</span>
+<span>(41/52) installing mingw-w64-ucrt-x86_64-tk                                                                                                       [########################################################################################] 100%</span>
+<span>(42/52) installing mingw-w64-ucrt-x86_64-libb2                                                                                                    [########################################################################################] 100%</span>
+<span>(43/52) installing mingw-w64-ucrt-x86_64-xz                                                                                                       [########################################################################################] 100%</span>
+<span>(44/52) installing mingw-w64-ucrt-x86_64-python                                                                                                   [########################################################################################] 100%</span>
+<span>(45/52) installing mingw-w64-ucrt-x86_64-termcap                                                                                                  [########################################################################################] 100%</span>
+<span>(46/52) installing mingw-w64-ucrt-x86_64-readline                                                                                                 [########################################################################################] 100%</span>
+<span>(47/52) installing mingw-w64-ucrt-x86_64-xxhash                                                                                                   [########################################################################################] 100%</span>
+<span>(48/52) installing mingw-w64-ucrt-x86_64-gdb                                                                                                      [########################################################################################] 100%</span>
+<span>Optional dependencies for mingw-w64-ucrt-x86_64-gdb</span>
+<span>    mingw-w64-ucrt-x86_64-python-pygments: for syntax highlighting</span>
+<span>(49/52) installing mingw-w64-ucrt-x86_64-gdb-multiarch                                                                                            [########################################################################################] 100%</span>
+<span>Optional dependencies for mingw-w64-ucrt-x86_64-gdb-multiarch</span>
+<span>    mingw-w64-ucrt-x86_64-python-pygments: for syntax highlighting</span>
+<span>(50/52) installing mingw-w64-ucrt-x86_64-libgomp                                                                                                  [########################################################################################] 100%</span>
+<span>(51/52) installing mingw-w64-ucrt-x86_64-make                                                                                                     [########################################################################################] 100%</span>
+<span>(52/52) installing mingw-w64-ucrt-x86_64-pkgconf                                                                                                  [########################################################################################] 100%</span>
+<span>:: Running post-transaction hooks...</span>
+<span>(1/1) Updating the info directory file...</span>
+<span>//如果显示了下面就完成了</span>
+<span>test@ASUS UCRT64 ~</span>
+<span></span>
+</code></pre>
+            </code-opinion>
+        </code-area>
+        <div class="paragraph">
+            编译器本体在./ucrt/bin/g++.exe（和上面不太一样）
+        </div>
+        <img src="assets/cppWinMingwInstall/img023.png" class="default"/>
+    </div>
+    <script src="js/component.js"></script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-en">
+<head>
+    <meta charset="UTF-8">
+    <title>高精度计算——1、应用</title>
+    <link href="css/bigNumberMemory_dark.css" rel="stylesheet">
+    <link href="css/component_dark.css" rel="stylesheet">
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']]
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <div id="head_menu">
+        <div class="head_opinion" onclick="window.location.href='home.html';">
+            <img src="assets/icon.png" id="head_icon_img">
+        </div>
+        <div class="head_opinion" style="margin-right: auto;border-right: #4b4e53 1px solid;" onclick="window.location.href='list.html';">
+            <img src="assets/list_dark.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/sun.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/translate_dark.svg">
+        </div>
+        <div class="head_opinion" id="github_opinion" onclick="window.location.href='https://github.com/aSleepingDog'">
+            <img src="assets/github.svg">
+        </div>
+    </div>
+    <index-area id="index" for="main_context"></index-area>
+    <div id="main_context">
+        <h1>高精度计算——1、应用</h1>
+        <div class="meta">
+            上次更新:2026-10-15
+        </div>
+        <div class="paragraph">
+            新闻中时常出现计算$\pi$的后续上千上亿位数，近年还求出了一个最大的梅森素数。这些数字的计算均使用到了高精度数字和相关计算算法。在民用领域，RSA加密算法也需要高精度数字。所以这个系列的文章将简单讲述一下高精度的相关表示、算法和应用。
+        </div>
+        <h2>使用时机</h2>
+        <div class="paragraph">
+            虽然高精度数字有很多应用领域，但是在很多情况下，基本数据类型提供的数字类型就已经够用。很多边界情况均可以加以限制来满足需求，简单的CPU指令要比调用内存快得多。所以请仔细斟酌是否需要高精度计算。
+        </div>
+        <h2>应用</h2>
+        <div class="paragraph">
+            高精度数使用较多的一般使用原码表示的自然数，这一类数有如下的操作。
+        </div>
+        <div class="paragraph">
+            按位非，按位或，按位与，按位异或，右移（丢弃低位），左移（可选溢出和不溢出），加法，减法，乘法，除法（一般向下取整），取余，比较
+        </div>
+        <h3>Python</h3>
+        <div class="paragraph">
+            Python自带的int类型本身就支持高精度，所以使用是最为简单的。需要注意的是解释器限制了int的最大值，如果需要计算则需要使用函数解除限制（但计算也更耗时）。而且int在多数情况下不可变，所以结果需要额外变量承接结果。
+        </div>
+        <code-area>
+            <code-opinion language="Python">
+<pre style="white-space:pre-wrap;word-wrap:break-word;background-color:#1F1F1F;color:#CCCCCC"><code><span><span style="color:#CCCCCC">a </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 9876543210987654321</span></span>
+<span></span>
+<span><span style="color:#CCCCCC">c </span><span style="color:#D4D4D4">=</span><span style="color:#D4D4D4"> ~</span><span style="color:#CCCCCC">a</span></span>
+<span><span style="color:#CCCCCC">a </span><span style="color:#D4D4D4">+=</span><span style="color:#B5CEA8"> 1</span></span>
+<span><span style="color:#CCCCCC">a </span><span style="color:#D4D4D4">-=</span><span style="color:#B5CEA8"> 1</span></span>
+<span><span style="color:#CCCCCC">c </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">>></span><span style="color:#B5CEA8"> 1</span></span>
+<span><span style="color:#CCCCCC">a </span><span style="color:#D4D4D4">>>=</span><span style="color:#B5CEA8"> 1</span></span>
+<span><span style="color:#CCCCCC">c </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">&#x3C;&#x3C;</span><span style="color:#B5CEA8"> 1</span></span>
+<span><span style="color:#CCCCCC">a </span><span style="color:#D4D4D4">&#x3C;&#x3C;=</span><span style="color:#B5CEA8"> 1</span></span>
+<span></span>
+<span><span style="color:#CCCCCC">b </span><span style="color:#D4D4D4">=</span><span style="color:#B5CEA8"> 1234567890123456789</span></span>
+<span></span>
+<span><span style="color:#CCCCCC">c </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">+</span><span style="color:#CCCCCC"> b</span></span>
+<span><span style="color:#CCCCCC">c </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">-</span><span style="color:#CCCCCC"> b  </span><span style="color:#6A9955"># Python的整数默认是有符号的 相减可以无视大小</span></span>
+<span><span style="color:#CCCCCC">c </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">*</span><span style="color:#CCCCCC"> b</span></span>
+<span><span style="color:#CCCCCC">c </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">//</span><span style="color:#CCCCCC"> b </span><span style="color:#6A9955"># / 在Python中会将结果转换成IEEE754规定的浮点数 //才是上述提到的整数除法</span></span>
+<span><span style="color:#CCCCCC">c </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">%</span><span style="color:#CCCCCC"> b</span></span>
+<span><span style="color:#CCCCCC">c </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">|</span><span style="color:#CCCCCC"> b</span></span>
+<span><span style="color:#CCCCCC">c </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">&#x26;</span><span style="color:#CCCCCC"> b</span></span>
+<span><span style="color:#CCCCCC">c </span><span style="color:#D4D4D4">=</span><span style="color:#CCCCCC"> a </span><span style="color:#D4D4D4">==</span><span style="color:#CCCCCC"> b </span><span style="color:#6A9955"># &#x3C; &#x3C;= > >= != 同理</span></span></code></pre>
+            </code-opinion>
+        </code-area>
+        <h3>Java</h3>
+        <div class="paragraph">
+            Java的数学库中提供了高精度整数类BigInteger，由于其本身不可变（没有可供更改内部数据的函数），所以自加自减操作不支持。其余操作如下。
+        </div>
+        <code-area>
+            <code-opinion language="Java">
+<pre style="white-space:pre-wrap;word-wrap:break-word;background-color:#1F1F1F;color:#CCCCCC"><code><span><span style="color:#569CD6">import</span><span style="color:#D4D4D4"> java.math.BigInteger</span><span style="color:#CCCCCC">;</span></span>
+<span></span>
+<span><span style="color:#569CD6">public</span><span style="color:#569CD6"> class</span><span style="color:#4EC9B0"> test</span><span style="color:#CCCCCC">{</span></span>
+<span><span style="color:#569CD6">    public</span><span style="color:#569CD6"> static</span><span style="color:#4EC9B0"> void</span><span style="color:#DCDCAA"> main</span><span style="color:#CCCCCC">(</span><span style="color:#4EC9B0">String</span><span style="color:#CCCCCC">[] </span><span style="color:#9CDCFE">args</span><span style="color:#CCCCCC">){</span></span>
+<span><span style="color:#4EC9B0">        BigInteger</span><span style="color:#9CDCFE"> a</span><span style="color:#D4D4D4"> =</span><span style="color:#C586C0"> new</span><span style="color:#DCDCAA"> BigInteger</span><span style="color:#CCCCCC">(</span><span style="color:#CE9178">"9876543210987654321"</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#CCCCCC">        </span></span>
+<span><span style="color:#4EC9B0">        BigInteger</span><span style="color:#9CDCFE"> c</span><span style="color:#D4D4D4"> =</span><span style="color:#C586C0"> new</span><span style="color:#DCDCAA"> BigInteger</span><span style="color:#CCCCCC">(</span><span style="color:#CE9178">"0"</span><span style="color:#CCCCCC">);</span></span>
+<span></span>
+<span><span style="color:#CCCCCC">        c </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">not</span><span style="color:#CCCCCC">();             </span><span style="color:#6A9955">// ~a</span></span>
+<span><span style="color:#CCCCCC">        c </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">shiftLeft</span><span style="color:#CCCCCC">(</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">);   </span><span style="color:#6A9955">// a &#x3C;&#x3C; 1</span></span>
+<span><span style="color:#CCCCCC">        c </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">shiftRight</span><span style="color:#CCCCCC">(</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">);  </span><span style="color:#6A9955">// a >> 1</span></span>
+<span></span>
+<span><span style="color:#6A9955">        //不支持自加自减自移动</span></span>
+<span></span>
+<span><span style="color:#4EC9B0">        BigInteger</span><span style="color:#9CDCFE"> b</span><span style="color:#D4D4D4"> =</span><span style="color:#C586C0"> new</span><span style="color:#DCDCAA"> BigInteger</span><span style="color:#CCCCCC">(</span><span style="color:#CE9178">"1234567890123456789"</span><span style="color:#CCCCCC">);</span></span>
+<span></span>
+<span><span style="color:#CCCCCC">        c </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">add</span><span style="color:#CCCCCC">(b);       </span><span style="color:#6A9955">// a + b</span></span>
+<span><span style="color:#CCCCCC">        c </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">subtract</span><span style="color:#CCCCCC">(b);  </span><span style="color:#6A9955">// a - b</span></span>
+<span><span style="color:#CCCCCC">        c </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">multiply</span><span style="color:#CCCCCC">(b);  </span><span style="color:#6A9955">// a * b</span></span>
+<span><span style="color:#CCCCCC">        c </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">divide</span><span style="color:#CCCCCC">(b);    </span><span style="color:#6A9955">// a / b</span></span>
+<span><span style="color:#CCCCCC">        c </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">mod</span><span style="color:#CCCCCC">(b);       </span><span style="color:#6A9955">// a % b</span></span>
+<span><span style="color:#CCCCCC">        c </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">or</span><span style="color:#CCCCCC">(b);        </span><span style="color:#6A9955">// a | b</span></span>
+<span><span style="color:#CCCCCC">        c </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">and</span><span style="color:#CCCCCC">(b);       </span><span style="color:#6A9955">// a &#x26; b</span></span>
+<span><span style="color:#CCCCCC">        c </span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">xor</span><span style="color:#CCCCCC">(b);       </span><span style="color:#6A9955">// a ^ b</span></span>
+<span></span>
+<span><span style="color:#6A9955">        /*</span></span>
+<span><span style="color:#6A9955">            1 a > b</span></span>
+<span><span style="color:#6A9955">            0 a == b</span></span>
+<span><span style="color:#6A9955">            -1 a &#x3C; b</span></span>
+<span><span style="color:#6A9955">         */</span></span>
+<span><span style="color:#4EC9B0">        int</span><span style="color:#9CDCFE"> r</span><span style="color:#D4D4D4"> =</span><span style="color:#9CDCFE"> a</span><span style="color:#CCCCCC">.</span><span style="color:#DCDCAA">compareTo</span><span style="color:#CCCCCC">(b);</span></span>
+<span><span style="color:#CCCCCC">    }</span></span>
+<span><span style="color:#CCCCCC">}</span></span></code></pre>
+            </code-opinion>
+        </code-area>
+        <h3>JavaScript</h3>
+        <div class="paragraph">
+            JavaScript（ES11从2020.6开始，需要注意环境支持情况）内置对象BigInt，操作如下。
+        </div>
+        <code-area>
+            <code-opinion language="JavaScript">
+<pre style="white-space:pre-wrap;word-wrap:break-word;background-color:#1F1F1F;color:#CCCCCC"><code><span><span style="color:#569CD6">let</span><span style="color:#9CDCFE"> a</span><span style="color:#D4D4D4"> =</span><span style="color:#DCDCAA"> BigInt</span><span style="color:#CCCCCC">(</span><span style="color:#B5CEA8">1</span><span style="color:#CCCCCC">);</span></span>
+<span><span style="color:#9CDCFE">a</span><span style="color:#D4D4D4"> =</span><span style="color:#DCDCAA"> BigInt</span><span style="color:#CCCCCC">(</span><span style="color:#CE9178">"9876543210987654321"</span><span style="color:#CCCCCC">); </span><span style="color:#6A9955">//通过函数定义</span></span>
+<span><span style="color:#569CD6">let</span><span style="color:#9CDCFE"> b</span><span style="color:#D4D4D4"> =</span><span style="color:#B5CEA8"> 1234567890123456789</span><span style="color:#569CD6">n</span><span style="color:#CCCCCC">;      </span><span style="color:#6A9955">//通过后缀定义</span></span>
+<span></span>
+<span><span style="color:#6A9955">//需要注意BigInt不能和原来的Number混用，必要时使用BigInt()函数进行转换</span></span>
+<span><span style="color:#569CD6">let</span><span style="color:#9CDCFE"> c</span><span style="color:#D4D4D4"> =</span><span style="color:#D4D4D4"> ~</span><span style="color:#9CDCFE">a</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">a</span><span style="color:#D4D4D4"> +=</span><span style="color:#B5CEA8"> 1</span><span style="color:#569CD6">n</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">a</span><span style="color:#D4D4D4"> -=</span><span style="color:#B5CEA8"> 1</span><span style="color:#569CD6">n</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">c</span><span style="color:#D4D4D4"> =</span><span style="color:#9CDCFE"> a</span><span style="color:#D4D4D4"> >></span><span style="color:#B5CEA8"> 1</span><span style="color:#569CD6">n</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">a</span><span style="color:#D4D4D4"> >>=</span><span style="color:#B5CEA8"> 1</span><span style="color:#569CD6">n</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">c</span><span style="color:#D4D4D4"> =</span><span style="color:#9CDCFE"> a</span><span style="color:#D4D4D4"> &#x3C;&#x3C;</span><span style="color:#B5CEA8"> 1</span><span style="color:#569CD6">n</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">a</span><span style="color:#D4D4D4"> &#x3C;&#x3C;=</span><span style="color:#B5CEA8"> 1</span><span style="color:#569CD6">n</span><span style="color:#CCCCCC">;</span></span>
+<span></span>
+<span><span style="color:#9CDCFE">c</span><span style="color:#D4D4D4"> =</span><span style="color:#9CDCFE"> a</span><span style="color:#D4D4D4"> +</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">c</span><span style="color:#D4D4D4"> =</span><span style="color:#9CDCFE"> a</span><span style="color:#D4D4D4"> -</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">c</span><span style="color:#D4D4D4"> =</span><span style="color:#9CDCFE"> a</span><span style="color:#D4D4D4"> *</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">c</span><span style="color:#D4D4D4"> =</span><span style="color:#9CDCFE"> a</span><span style="color:#D4D4D4"> /</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">c</span><span style="color:#D4D4D4"> =</span><span style="color:#9CDCFE"> a</span><span style="color:#D4D4D4"> %</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">c</span><span style="color:#D4D4D4"> =</span><span style="color:#9CDCFE"> a</span><span style="color:#D4D4D4"> |</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">c</span><span style="color:#D4D4D4"> =</span><span style="color:#9CDCFE"> a</span><span style="color:#D4D4D4"> &#x26;</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">c</span><span style="color:#D4D4D4"> =</span><span style="color:#9CDCFE"> a</span><span style="color:#D4D4D4"> ^</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">;</span></span>
+<span><span style="color:#9CDCFE">c</span><span style="color:#D4D4D4"> =</span><span style="color:#9CDCFE"> a</span><span style="color:#D4D4D4"> ==</span><span style="color:#9CDCFE"> b</span><span style="color:#CCCCCC">;</span><span style="color:#6A9955">//&#x3C; &#x3C;= > >= != 同理</span></span></code></pre>
+            </code-opinion>
+        </code-area>
+        <h3>C++</h3>
+        <div class="paragraph">
+            C++的标准库STL至今没有高精度数支持，标准只支持最高64位的原码计算（gcc/llvm有128位的支持）。此处需要使用GUN项目下的GMP库提供的C++接口进行计算（详细内容会在后续更新）
+        </div>
+    </div>
+    <script src="js/component.js"></script>
+</body>
+</html>

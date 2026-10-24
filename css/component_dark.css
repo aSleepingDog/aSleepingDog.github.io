@@ -34,6 +34,14 @@ input{
 a{
     color: #83aad6;
 }
+span .inline_code{
+    font-family: EnCodeFont, sans-serif;
+}
+img.default{
+    display: block;
+    width: 80%;
+    margin: 0 auto;
+}
 
 /*table*/
 div.table_area{
@@ -262,4 +270,38 @@ binary-input .input_field{
 }
 binary-input .input_text{
     width: 95%;
+}
+
+/*dialog*/
+dialog[type="img"]{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #00000000;
+    overflow: hidden;
+}
+dialog[type="img"]:focus{
+    border: none;
+    box-shadow: none;
+    outline: none;
+}
+dialog[type="img"] div.img_player{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+dialog[type="img"] div.default{
+    width: 80%;
+}
+dialog[type="img"] div.notice{
+    position: absolute;
+    top: 0;
+    left: 50%;
+    color: white;
+    background-color: #2B2B2B;
+    font-size: 16px;
+    transform: translate(-50%, 0);
 }

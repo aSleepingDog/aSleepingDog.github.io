@@ -62,9 +62,6 @@ body{
     font-size: 15px;
     margin: 7px;
 }
-.inline_code{
-    font-family: EnCodeFont, sans-serif;
-}
 .sha2_bytes_box{
     display: grid;
     grid-template-columns: repeat(16, 1fr);

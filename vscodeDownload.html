@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-en">
+<head>
+    <meta charset="UTF-8">
+    <title>vscode下载</title>
+    <link href="css/context_template_dark.css" rel="stylesheet">
+    <link href="css/component_dark.css" rel="stylesheet">
+</head>
+<body>
+    <div id="head_menu">
+        <div class="head_opinion" onclick="window.location.href='home.html';">
+            <img src="assets/icon.png" id="head_icon_img">
+        </div>
+        <div class="head_opinion" style="margin-right: auto;border-right: #4b4e53 1px solid;" onclick="window.location.href='list.html';">
+            <img src="assets/list_dark.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/sun.svg">
+        </div>
+        <div class="head_opinion">
+            <img src="assets/translate_dark.svg">
+        </div>
+        <div class="head_opinion" id="github_opinion" onclick="window.location.href='https://github.com/aSleepingDog'">
+            <img src="assets/github.svg">
+        </div>
+    </div>
+    <index-area id="index" for="main_context"></index-area>
+    <div id="main_context">
+        <h1>vscode下载安装</h1>
+        <div class="meta">
+            上次更新:2026-10-23
+        </div>
+        <div class="paragraph">
+            vscode（visual studio code <a href="https://code.visualstudio.com/">官网</a>）是微软在2017年基于跨平台electron框架编写的跨平台代码编辑器，配合各种插件生态，可以进行几乎所有的编程语言的开发。是广泛使用的开发工具。
+        </div>
+        <div class="paragraph">
+            本篇文章将下载安装vscode（虽然现在都是傻瓜式了）
+        </div>
+        <h2>下载</h2>
+        <div class="paragraph">
+            点击中间的download键跳转至下载界面
+        </div>
+        <img src="assets/vscodeDownload/img000.png" class="default">
+        <div class="paragraph">
+            下载的安装包
+        </div>
+        <img src="assets/vscodeDownload/img001.png" class="default">
+        <h2>安装</h2>
+        <div class="paragraph">
+            双击运行，观看（应该会看吧）并选择同意协议后选择下一步
+        </div>
+        <img src="assets/vscodeDownload/img002.png" class="default">
+        <div class="paragraph">
+            选择安装位置
+        </div>
+        <img src="assets/vscodeDownload/img003.png" class="default">
+        <div class="paragraph">
+            选择开始菜单选项
+        </div>
+        <img src="assets/vscodeDownload/img004.png" class="default">
+        <div class="paragraph">
+            选择额外操作（为了后续更好的体验，可以全部勾选，如果菜单过长可以考虑精简）
+        </div>
+        <img src="assets/vscodeDownload/img005.png" class="default">
+        <div class="paragraph">
+            是否加入github copilot ai工具助手（微软在vscode内置的ai agent，不过在大陆因为网络问题经常连接不上，这里选择不添加）
+        </div>
+        <img src="assets/vscodeDownload/img006.png" class="default">
+        <div class="paragraph">
+            最后查看选择的选项
+        </div>
+        <img src="assets/vscodeDownload/img007.png" class="default">
+        <div class="paragraph">
+            等待解压安装
+        </div>
+        <img src="assets/vscodeDownload/img008.png" class="default">
+        <div class="paragraph">
+            到此选择完成结束安装
+        </div>
+        <img src="assets/vscodeDownload/img009.png" class="default">
+        <h2>中文支持</h2>
+        <div class="paragraph">
+            考虑到中文社区的庞大基数，和广大社区成员较为欠缺的英文使用能力。菜单区域的中文语言包是非常有必要了，接下来会配置中文环境
+        </div>
+        <div class="paragraph">
+            不过众多的技术文档都会以英文为主，所以了解每个菜单对应的单词也是很有必要的。
+        </div>
+        <div class="paragraph">
+            打开vscode（可以在桌面，开始菜单或者安装位置打开程序）
+        </div>
+        <img src="assets/vscodeDownload/img010.png" class="default">
+        <div class="paragraph">
+            选择左侧纵向菜单的第五项，在搜索框中输入<span class="inline_code">Chinese</span>，选择简体中文（选繁体我也不阻止你），点击安装
+        </div>
+        <img src="assets/vscodeDownload/img011.png" class="default">
+        <div class="paragraph">
+            等待安装完成（其实下面的简介都有使用方式了，接下来只是照着来）
+        </div>
+        <img src="assets/vscodeDownload/img012.png" class="default">
+        <div class="paragraph">
+            <span class="inline_code">Ctrl+Shift+P</span>打开中间顶部的命令菜单，输入<span class="inline_code">display</span>，选择<span class="inline_code">Configure Display Language</span>
+        </div>
+        <img src="assets/vscodeDownload/img013.png" class="default">
+        <div class="paragraph">
+            选择中文（简体）
+        </div>
+        <img src="assets/vscodeDownload/img014.png" class="default">
+        <div class="paragraph">
+            依照提示选择<span class="inline_code">Restart</span>重启
+        </div>
+        <img src="assets/vscodeDownload/img015.png" class="default">
+        <div class="paragraph">
+            重启后菜单界面的汉化就完成了
+        </div>
+        <img src="assets/vscodeDownload/img016.png" class="default">
+        <h2>后续</h2>
+        <div class="paragraph">
+            此时的vscode已经安装配置完成了，不过此时还不能进行软件开发，还需要安装各个插件才能肩负起开发任务。下面的链接将开始配置各个语言的开发环境。
+        </div>
+        <div class="paragraph">
+            <a href="cppWinMingwVsc.html">C/C++</a>
+        </div>
+    </div>
+    <script src="js/component.js"></script>
+</body>
+</html>
